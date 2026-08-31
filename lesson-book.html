@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>The Lesson Book</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style id="sheet">
+:root{
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --bg:#f4f2ee; --panel:#ffffff; --panel-2:#faf8f4;
+  --ink:#211f1b; --muted:#6c675e; --faint:#9a9488;
+  --line:#e4e0d8; --line-2:#efece5;
+  --accent:#211f1b; --accent-ink:#faf8f4;
+  --focus:#2f6db0;
+  --today:#fff6e6;
+  --shadow:0 1px 2px rgba(33,31,27,.05),0 10px 34px rgba(33,31,27,.09);
+  --piano:#2f6db0; --piano-bg:#e9f1f8; --piano-ink:#1c4c81;
+  --guitar:#bd6b1a; --guitar-bg:#f6ecdd; --guitar-ink:#7e4711;
+  --voice:#be3a6e; --voice-bg:#f9e7ef; --voice-ink:#8a2650;
+  --ukulele:#2e9e6b; --ukulele-bg:#e3f3ec; --ukulele-ink:#1c6b47;
+  --drums:#6c4bd0; --drums-bg:#ece7f9; --drums-ink:#4a2f9e;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#151311; --panel:#1f1c19; --panel-2:#26221e;
+    --ink:#f2efe8; --muted:#a9a298; --faint:#7c7568;
+    --line:#332f2a; --line-2:#2b2823;
+    --accent:#f2efe8; --accent-ink:#1a1815;
+    --focus:#6db3e0;
+    --today:#2c2517;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);
+    --piano:#6fb2e2; --piano-bg:#152c3c; --piano-ink:#c3e1f5;
+    --guitar:#e0a05a; --guitar-bg:#382613; --guitar-ink:#f3d5ac;
+    --voice:#e07aa6; --voice-bg:#3a1c2b; --voice-ink:#f6cbdd;
+    --ukulele:#5fc79a; --ukulele-bg:#123527; --ukulele-ink:#c0ecd7;
+    --drums:#a68ce8; --drums-bg:#241a3f; --drums-ink:#dacdf6;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151311; --panel:#1f1c19; --panel-2:#26221e;
+  --ink:#f2efe8; --muted:#a9a298; --faint:#7c7568;
+  --line:#332f2a; --line-2:#2b2823;
+  --accent:#f2efe8; --accent-ink:#1a1815;
+  --focus:#6db3e0;
+  --today:#2c2517;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);
+  --piano:#6fb2e2; --piano-bg:#152c3c; --piano-ink:#c3e1f5;
+  --guitar:#e0a05a; --guitar-bg:#382613; --guitar-ink:#f3d5ac;
+  --voice:#e07aa6; --voice-bg:#3a1c2b; --voice-ink:#f6cbdd;
+  --ukulele:#5fc79a; --ukulele-bg:#123527; --ukulele-ink:#c0ecd7;
+  --drums:#a68ce8; --drums-bg:#241a3f; --drums-ink:#dacdf6;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--f-body); font-size:14px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.wrap{max-width:1180px; margin:0 auto; padding:22px 22px 60px}
+
+.hd{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:16px}
+.brand h1{font-family:var(--f-disp); font-weight:700; font-size:23px; letter-spacing:-.02em; margin:0; text-wrap:balance}
+.brand p{margin:3px 0 0; font-family:var(--f-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted)}
+.hd-actions{display:flex; gap:8px; flex-wrap:wrap}
+
+.btn{font-size:13px; padding:8px 12px; border-radius:9px; border:1px solid var(--line); background:var(--panel); color:var(--ink); cursor:pointer; line-height:1; white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+.btn.primary:hover{opacity:.9}
+.btn.icon{padding:8px 10px; font-size:15px}
+.btn.ghost{border-color:transparent; background:transparent; color:var(--muted)}
+.btn.ghost:hover{background:var(--panel-2); border-color:transparent}
+.btn.danger{color:var(--voice); border-color:transparent; background:transparent}
+.btn.danger:hover{background:var(--voice-bg); border-color:transparent}
+
+.help{display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--panel-2); border:1px solid var(--line); border-radius:11px; padding:9px 12px; font-size:12.5px; color:var(--muted); margin-bottom:14px}
+.help b{color:var(--ink); font-weight:600}
+.help .spacer{flex:1}
+.linkish{background:none; border:0; color:var(--focus); cursor:pointer; font-size:12.5px; padding:2px 4px; text-decoration:underline}
+
+.bar{display:flex; flex-wrap:wrap; gap:12px 14px; align-items:center; justify-content:space-between; margin-bottom:14px}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden}
+.seg button{font-size:13px; padding:7px 15px; border:0; background:var(--panel); color:var(--muted); cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--accent); color:var(--accent-ink)}
+.nav{display:flex; align-items:center; gap:4px}
+.nav strong{font-family:var(--f-disp); font-weight:600; font-size:15px; min-width:150px; text-align:center}
+.nav .arw{font-size:16px; padding:6px 10px}
+.wk-cap{font-family:var(--f-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--faint)}
+
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:5px 11px; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--ink); cursor:pointer}
+.chip .dot{width:8px; height:8px; border-radius:50%; background:var(--c,var(--faint)); flex:none}
+.chip[aria-pressed="true"]{background:var(--cb,var(--panel-2)); border-color:var(--c,var(--muted)); color:var(--ci,var(--ink)); font-weight:600}
+.chip.all[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.chip.all .dot{background:currentColor}
+
+.scroll{overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--panel)}
+
+/* ---- week ---- */
+.wk{min-width:760px}
+.wk-head{display:grid; grid-template-columns:58px repeat(7,1fr); position:sticky; top:0; z-index:3; background:var(--panel); border-bottom:1px solid var(--line)}
+.wk-head .cnr{border-right:1px solid var(--line)}
+.wk-dh{padding:10px 8px; font-family:var(--f-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-right:1px solid var(--line)}
+.wk-dh:last-child{border-right:0}
+.wk-body{display:grid; grid-template-columns:58px repeat(7,1fr); position:relative}
+.gutter{position:relative; border-right:1px solid var(--line)}
+.gutter .hl{position:absolute; right:6px; transform:translateY(-6px); font-family:var(--f-mono); font-size:10px; color:var(--faint)}
+.daycol{position:relative; border-right:1px solid var(--line); cursor:copy;
+  background-image:
+    repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px var(--hour,48px)),
+    repeating-linear-gradient(to bottom, transparent 0 calc(var(--hour,48px)/2), var(--line-2) calc(var(--hour,48px)/2) calc(var(--hour,48px)/2 + 1px), transparent calc(var(--hour,48px)/2 + 1px) var(--hour,48px));
+}
+.daycol:last-child{border-right:0}
+.ev{position:absolute; left:0; right:0; margin:0 2px; padding:3px 6px; border:0; border-left:3px solid var(--c); border-radius:6px;
+  background:var(--cb); color:var(--ci); text-align:left; cursor:pointer; overflow:hidden; display:flex; flex-direction:column; gap:1px}
+.ev:hover{filter:brightness(.97); box-shadow:inset 0 0 0 1px var(--c)}
+.ev.short{flex-direction:row; align-items:baseline; gap:5px}
+.ev .ev-t{font-family:var(--f-mono); font-size:10px; font-weight:500; opacity:.85; flex:none}
+.ev .ev-s{font-size:11.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ev .ev-n{font-size:10px; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+/* ---- month ---- */
+.mo{min-width:760px}
+.mo-head{display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--line)}
+.mo-head div{padding:8px 10px; font-family:var(--f-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-right:1px solid var(--line)}
+.mo-head div:last-child{border-right:0}
+.mo-grid{display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:minmax(96px,1fr)}
+.mo-cell{border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:5px 6px 7px; display:flex; flex-direction:column; gap:3px; cursor:pointer; min-width:0}
+.mo-cell:nth-child(7n){border-right:0}
+.mo-cell.out{background:var(--panel-2)}
+.mo-cell.out .mo-d{color:var(--faint)}
+.mo-cell.today{box-shadow:inset 0 0 0 2px var(--focus)}
+.mo-d{font-family:var(--f-mono); font-size:11px; color:var(--muted); align-self:flex-end}
+.mo-cell.today .mo-d{color:var(--focus); font-weight:600}
+.pill{display:flex; align-items:center; gap:5px; width:100%; border:0; border-radius:5px; padding:2px 5px; background:var(--cb); color:var(--ci); font-size:10.5px; cursor:pointer; white-space:nowrap; overflow:hidden}
+.pill .pdot{width:6px; height:6px; border-radius:50%; background:var(--c); flex:none}
+.pill .pt{font-family:var(--f-mono); font-weight:500; flex:none}
+.pill .ps{overflow:hidden; text-overflow:ellipsis}
+.more{border:0; background:none; color:var(--muted); font-size:10.5px; cursor:pointer; text-align:left; padding:1px 5px}
+.more:hover{color:var(--ink)}
+
+.empty{padding:46px 24px; text-align:center; color:var(--muted)}
+.empty h3{font-family:var(--f-disp); font-weight:600; color:var(--ink); margin:0 0 6px}
+
+/* ---- modal ---- */
+.overlay{position:fixed; inset:0; background:rgba(15,13,10,.46); display:grid; place-items:center; padding:16px; z-index:50}
+.modal{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); width:min(440px,100%); max-height:90vh; overflow:auto; padding:20px}
+.modal h2{font-family:var(--f-disp); font-weight:600; font-size:18px; margin:0 0 16px}
+.fld{display:flex; flex-direction:column; gap:5px; margin-bottom:13px}
+.fld label{font-family:var(--f-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+.fld input,.fld select,.fld textarea{font-family:inherit; font-size:14px; padding:9px 10px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); color:var(--ink); width:100%}
+.fld textarea{resize:vertical; min-height:56px}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.rep{display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden}
+.rep button{font-size:13px; padding:8px 14px; border:0; background:var(--panel-2); color:var(--muted); cursor:pointer; flex:1}
+.rep button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink)}
+.m-act{display:flex; gap:8px; align-items:center; margin-top:18px}
+.m-act .grow{flex:1}
+.err{color:var(--voice); font-size:12px; margin:-6px 0 10px}
+.daylist{display:flex; flex-direction:column; gap:6px; margin-bottom:14px}
+.daylist button{display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:1px solid var(--line); border-radius:9px; padding:8px 10px; background:var(--panel-2); color:var(--ink); cursor:pointer; font-size:13px}
+.daylist button:hover{border-color:var(--muted)}
+.daylist .pt{font-family:var(--f-mono); font-size:12px; color:var(--muted); flex:none}
+.daylist .tag{font-family:var(--f-mono); font-size:10px; text-transform:uppercase; letter-spacing:.05em; margin-left:auto; color:var(--muted)}
+.swatch{width:10px; height:10px; border-radius:50%; flex:none}
+.hint{font-size:12px; color:var(--muted); margin:8px 0 0}
+
+/* ---- billing ---- */
+.bill-actions{display:flex; gap:8px; flex-wrap:wrap}
+.bfilter{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+.bfilter select{font-family:var(--f-body); font-size:12px; padding:5px 8px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink)}
+.chip.sf{text-transform:capitalize}
+.chip.sf[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600}
+.stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px}
+.stat{border:1px solid var(--line); border-radius:12px; background:var(--panel); padding:12px 14px}
+.stat .k{font-family:var(--f-mono); font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted)}
+.stat .v{font-family:var(--f-disp); font-weight:600; font-size:20px; margin-top:3px; font-variant-numeric:tabular-nums}
+.stat.out .v{color:var(--voice)}
+.stat.coll .v{color:var(--ukulele)}
+.tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--panel)}
+.tbl{width:100%; border-collapse:collapse; min-width:860px; font-size:12.5px}
+.tbl th{text-align:left; font-family:var(--f-mono); font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:500; padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap}
+.tbl td{padding:9px 12px; border-bottom:1px solid var(--line-2); white-space:nowrap; vertical-align:middle}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:var(--panel-2)}
+.tbl .num{text-align:right; font-variant-numeric:tabular-nums; font-family:var(--f-mono)}
+.tbl .stu{font-weight:600; color:var(--ink)}
+.tbl .dt{font-family:var(--f-mono); color:var(--muted)}
+.lz{display:inline-flex; align-items:center; gap:6px}
+.lz .dot{width:8px; height:8px; border-radius:50%; background:var(--c,var(--faint)); flex:none}
+.badge{display:inline-block; font-family:var(--f-mono); font-size:9px; text-transform:uppercase; letter-spacing:.04em; padding:2px 6px; border-radius:5px; border:1px solid var(--line); color:var(--muted); margin-left:5px; vertical-align:middle}
+.badge.pack{color:var(--piano-ink); background:var(--piano-bg); border-color:transparent}
+.pill-s{display:inline-block; font-family:var(--f-mono); font-size:10px; text-transform:uppercase; letter-spacing:.04em; padding:3px 8px; border-radius:999px; font-weight:500}
+.pill-s.unpaid{background:var(--voice-bg); color:var(--voice-ink)}
+.pill-s.partial{background:var(--guitar-bg); color:var(--guitar-ink)}
+.pill-s.paid{background:var(--ukulele-bg); color:var(--ukulele-ink)}
+.mini{background:var(--panel-2); border:1px solid var(--line); border-radius:7px; padding:4px 8px; font-size:11px; cursor:pointer; color:var(--ink)}
+.mini:hover{border-color:var(--muted)}
+.calc{background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin:2px 0 13px; font-size:13px}
+.calc .r{display:flex; justify-content:space-between; gap:12px; padding:2px 0}
+.calc .r span:last-child{font-variant-numeric:tabular-nums; font-family:var(--f-mono)}
+.calc .r.tot{border-top:1px solid var(--line); margin-top:5px; padding-top:6px; font-weight:600; font-family:var(--f-disp)}
+.calc .r.bal{color:var(--muted)}
+.rategrid{display:grid; grid-template-columns:1fr auto auto; gap:8px 10px; align-items:center}
+.rategrid .h{font-family:var(--f-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); text-align:right}
+.rategrid .h:first-child{text-align:left}
+.rategrid input{width:88px; font-family:inherit; font-size:13px; padding:7px 8px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--ink); text-align:right}
+.rategrid .lbl{display:flex; align-items:center; gap:7px; font-size:13px}
+.pkg{background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; display:flex; flex-direction:column; gap:7px}
+.pkg input[type="text"],.pkg input[type="number"],.pkg select{font-family:inherit; font-size:13px; padding:7px 8px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); width:100%}
+.pkg .ck{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink)}
+.pkg .ck input{width:auto}
+.ckline{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink); margin-bottom:13px}
+.ckline input{width:auto}
+
+@media (max-width:640px){
+  .wrap{padding:16px 12px 48px}
+  .bar{gap:10px}
+  .nav strong{min-width:120px; font-size:14px}
+  .stats{grid-template-columns:1fr}
+}
+@media print{
+  :root{--bg:#fff;--panel:#fff;--panel-2:#fff;--ink:#000;--muted:#333;--line:#bbb;--line-2:#ddd}
+  .hd-actions,.help,.bar .seg,.bar .nav .arw,.bar .nav .today-btn,.bar .bill-actions,.bfilter,.more,.mini,.tbl th:last-child,.tbl td:last-child{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .scroll,.tbl-wrap{border:0}
+  .ev,.pill,.pill-s,.badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<script id="app-state" type="application/json">
+{"v":1,
+ "settings":{"title":"The Lesson Book","subtitle":"Online music lessons · teaching schedule","weekStartsMon":true,"dayStart":9,"dayEnd":20},
+ "teachers":[
+   {"id":"piano","label":"Piano","name":""},
+   {"id":"guitar","label":"Guitar","name":""},
+   {"id":"voice","label":"Voice","name":""},
+   {"id":"ukulele","label":"Ukulele","name":""},
+   {"id":"drums","label":"Drums","name":""}
+ ],
+ "lessons":[
+   {"id":"s1","teacher":"piano","student":"Mia R. (sample)","recurrence":"weekly","dow":1,"start":"15:00","mins":60,"notes":"","sample":true},
+   {"id":"s2","teacher":"guitar","student":"Liam T. (sample)","recurrence":"weekly","dow":1,"start":"16:00","mins":60,"notes":"","sample":true},
+   {"id":"s3","teacher":"piano","student":"Sofia L. (sample)","recurrence":"weekly","dow":3,"start":"15:00","mins":60,"notes":"","sample":true},
+   {"id":"s4","teacher":"voice","student":"Ava P. (sample)","recurrence":"weekly","dow":3,"start":"17:00","mins":60,"notes":"","sample":true},
+   {"id":"s5","teacher":"ukulele","student":"Noah K. (sample)","recurrence":"weekly","dow":4,"start":"16:00","mins":60,"notes":"","sample":true},
+   {"id":"s6","teacher":"drums","student":"Ethan M. (sample)","recurrence":"weekly","dow":5,"start":"15:00","mins":60,"notes":"","sample":true},
+   {"id":"s7","teacher":"guitar","student":"Trial lesson (sample)","recurrence":"once","date":"2026-09-05","start":"11:00","mins":60,"notes":"First-time student","sample":true}
+ ],
+ "rates":{
+   "currency":"PHP","symbol":"₱",
+   "perInstrument":{
+     "piano":{"local":400,"foreign":600},
+     "guitar":{"local":500,"foreign":500},
+     "voice":{"local":0,"foreign":0},
+     "ukulele":{"local":0,"foreign":0},
+     "drums":{"local":600,"foreign":600}
+   },
+   "packages":[
+     {"id":"piano12","label":"Piano · 12 sessions","instrument":"piano","sessions":12,"discount":300,"localOnly":true,"enabled":true}
+   ]
+ },
+ "bills":[
+   {"id":"b1","date":"2026-08-24","student":"Mia R. (sample)","instrument":"piano","clientType":"local","packageId":"piano12","sessions":12,"unitRate":400,"discount":300,"paidAmount":4500,"notes":"12-session package","sample":true},
+   {"id":"b2","date":"2026-08-28","student":"Liam T. (sample)","instrument":"guitar","clientType":"local","packageId":null,"sessions":4,"unitRate":500,"discount":0,"paidAmount":1000,"notes":"","sample":true},
+   {"id":"b3","date":"2026-08-30","student":"Hans B. (sample)","instrument":"piano","clientType":"foreign","packageId":null,"sessions":4,"unitRate":600,"discount":0,"paidAmount":0,"notes":"Lives abroad","sample":true}
+ ],
+ "ui":{"view":"week","filter":["piano","guitar","voice","ukulele","drums"],"helpDismissed":false,"billFilter":"all","billMonth":""}
+}
+</script>
+<div id="root"></div>
+<script id="main">
+(function(){
+  "use strict";
+  var HOUR = 54;
+  var TIDS = ["piano","guitar","voice","ukulele","drums"];
+  var DOW  = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var DOWL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+  function pad(n){ return (n<10?"0":"")+n; }
+  function toMin(t){ var p=String(t).split(":"); return (+p[0])*60+(+p[1]||0); }
+  function fromMin(v){ v=Math.max(0,Math.min(1439,v)); return pad(Math.floor(v/60))+":"+pad(v%60); }
+  function fmt12(t){ var p=String(t).split(":"); var h=+p[0], m=+p[1]||0; var ap=h<12?"a":"p"; var hh=h%12; if(hh===0)hh=12; return hh+(m?":"+pad(m):"")+ap; }
+  function fmtHour(h){ var ap=h<12?"a":"p"; var hh=h%12; if(hh===0)hh=12; return hh+ap; }
+  function iso(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+  function uid(){ try{ return crypto.randomUUID(); }catch(e){ return "l"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); } }
+
+  var DEFAULT = {
+    v:1,
+    settings:{title:"The Lesson Book",subtitle:"Online music lessons · teaching schedule",weekStartsMon:true,dayStart:9,dayEnd:20},
+    teachers:TIDS.map(function(id){ return {id:id,label:id.charAt(0).toUpperCase()+id.slice(1),name:""}; }),
+    lessons:[],
+    rates:{
+      currency:"PHP", symbol:"₱",
+      perInstrument:{ piano:{local:400,foreign:600}, guitar:{local:500,foreign:500}, voice:{local:0,foreign:0}, ukulele:{local:0,foreign:0}, drums:{local:600,foreign:600} },
+      packages:[ {id:"piano12",label:"Piano · 12 sessions",instrument:"piano",sessions:12,discount:300,localOnly:true,enabled:true} ]
+    },
+    bills:[],
+    ui:{view:"week",filter:TIDS.slice(),helpDismissed:false,billFilter:"all",billMonth:""}
+  };
+  var LSKEY = "lesson-book-v1";
+
+  // ---- load state ----
+  var state = null;
+  try{ state = JSON.parse(document.getElementById("app-state").textContent); }catch(e){ state=null; }
+  try{
+    var ls = localStorage.getItem(LSKEY);
+    if(ls){
+      var p = JSON.parse(ls);
+      var embeddedIsSeed = !state || !(state.lessons||[]).some(function(l){ return !l.sample; });
+      if(p && p.lessons && (embeddedIsSeed)) state = p;
+    }
+  }catch(e){}
+  if(!state) state = JSON.parse(JSON.stringify(DEFAULT));
+  state.settings = Object.assign({}, DEFAULT.settings, state.settings||{});
+  if(!Array.isArray(state.teachers) || state.teachers.length!==5) state.teachers = JSON.parse(JSON.stringify(DEFAULT.teachers));
+  if(!Array.isArray(state.lessons)) state.lessons = [];
+  state.rates = state.rates || JSON.parse(JSON.stringify(DEFAULT.rates));
+  state.rates.currency = state.rates.currency || "PHP";
+  state.rates.symbol = state.rates.symbol || "₱";
+  state.rates.perInstrument = Object.assign({}, DEFAULT.rates.perInstrument, state.rates.perInstrument||{});
+  TIDS.forEach(function(id){ state.rates.perInstrument[id] = Object.assign({local:0,foreign:0}, state.rates.perInstrument[id]||{}); });
+  if(!Array.isArray(state.rates.packages)) state.rates.packages = JSON.parse(JSON.stringify(DEFAULT.rates.packages));
+  if(!Array.isArray(state.bills)) state.bills = [];
+  state.ui = Object.assign({}, DEFAULT.ui, state.ui||{});
+  if(!Array.isArray(state.ui.filter) || !state.ui.filter.length) state.ui.filter = TIDS.slice();
+  if(["week","month","billing"].indexOf(state.ui.view)<0) state.ui.view = "week";
+
+  // ---- persistence ----
+  var cap = null, capReady = false;
+  if(window.claude && typeof window.claude.use === "function"){
+    window.claude.use("artifact").then(function(a){ cap = a; capReady = true; }).catch(function(){ capReady = true; });
+  }
+  var saveT = null;
+  function commit(){
+    try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){}
+    if(saveT) clearTimeout(saveT);
+    saveT = setTimeout(function(){
+      if(cap && typeof cap.publish === "function"){
+        try{ cap.publish(buildDoc(state)).catch(function(){}); }catch(e){}
+      }
+    }, 500);
+  }
+  function buildDoc(st){
+    var css = document.getElementById("sheet").textContent;
+    var js  = document.getElementById("main").textContent;
+    var fonts = document.getElementById("fonts").getAttribute("href");
+    var data = JSON.stringify(st).replace(/</g,"\\u003c");
+    return [
+      "<!doctype html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "<meta charset=\"utf-8\">",
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+      "<meta name=\"color-scheme\" content=\"light dark\">",
+      "<title>The Lesson Book</title>",
+      "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>",
+      "<link id=\"fonts\" rel=\"stylesheet\" href=\""+fonts+"\">",
+      "<style id=\"sheet\">"+css+"</style>",
+      "</head>",
+      "<body>",
+      "<script id=\"app-state\" type=\"application/json\">"+data+"<\/script>",
+      "<div id=\"root\"></div>",
+      "<script id=\"main\">"+js+"<\/script>",
+      "</body>",
+      "</html>"
+    ].join("\n");
+  }
+
+  // ---- helpers over state ----
+  function teacher(id){ for(var i=0;i<state.teachers.length;i++) if(state.teachers[i].id===id) return state.teachers[i]; return {id:id,label:id,name:""}; }
+  function tlabel(id){ var t=teacher(id); return t.label + (t.name?" · "+t.name:""); }
+  function visible(l){ return state.ui.filter.indexOf(l.teacher)>=0; }
+  function cols(){ return state.settings.weekStartsMon ? [1,2,3,4,5,6,0] : [0,1,2,3,4,5,6]; }
+  function tvars(id){ return "--c:var(--"+id+");--cb:var(--"+id+"-bg);--ci:var(--"+id+"-ink)"; }
+
+  // ---- billing helpers ----
+  function money(n){ n=Math.round(+n||0); return (state.rates.symbol||"₱")+n.toLocaleString("en-US"); }
+  function rateFor(inst,type){ var r=state.rates.perInstrument[inst]||{}; return +(type==="foreign"?r.foreign:r.local)||0; }
+  function pkgsFor(inst,type){ return (state.rates.packages||[]).filter(function(p){ return p.enabled && p.instrument===inst && (!p.localOnly || type==="local"); }); }
+  function pkgById(id){ for(var i=0;i<(state.rates.packages||[]).length;i++) if(state.rates.packages[i].id===id) return state.rates.packages[i]; return null; }
+  function billCalc(b){
+    var sub=(+b.sessions||0)*(+b.unitRate||0);
+    var disc=Math.max(0,+b.discount||0);
+    var tot=Math.max(0,sub-disc);
+    var paid=Math.max(0,+b.paidAmount||0);
+    var status = (tot>0 && paid>=tot) ? "paid" : (paid>0 ? "partial" : "unpaid");
+    return { sub:sub, disc:disc, tot:tot, paid:paid, bal:Math.max(0,tot-paid), status:status };
+  }
+  function findBill(id){ for(var i=0;i<state.bills.length;i++) if(state.bills[i].id===id) return state.bills[i]; return null; }
+  function instOpts(sel){ var o=""; state.teachers.forEach(function(t){ o+="<option value=\""+t.id+"\""+(t.id===sel?" selected":"")+">"+esc(tlabel(t.id))+"</option>"; }); return o; }
+
+  var cursor = new Date(); cursor.setDate(1); cursor.setHours(0,0,0,0);
+
+  // ---- week layout (overlap lanes) ----
+  function layout(items){
+    items.sort(function(a,b){ return a.s-b.s || a.e-b.e; });
+    var i=0;
+    while(i<items.length){
+      var group=[items[i]], maxEnd=items[i].e, j=i+1;
+      while(j<items.length && items[j].s < maxEnd){ group.push(items[j]); if(items[j].e>maxEnd) maxEnd=items[j].e; j++; }
+      var lanes=[];
+      group.forEach(function(it){
+        var placed=false;
+        for(var k=0;k<lanes.length;k++){ if(lanes[k] <= it.s){ it.lane=k; lanes[k]=it.e; placed=true; break; } }
+        if(!placed){ it.lane=lanes.length; lanes.push(it.e); }
+      });
+      group.forEach(function(it){ it.lanes=lanes.length; });
+      i=j;
+    }
+    return items;
+  }
+
+  function itemsFor(d){
+    var ds=iso(d), dw=d.getDay();
+    return state.lessons.filter(function(l){
+      if(!visible(l)) return false;
+      return l.recurrence==="weekly" ? l.dow===dw : l.date===ds;
+    }).sort(function(a,b){ return toMin(a.start)-toMin(b.start); });
+  }
+
+  // ---- rendering ----
+  var root = document.getElementById("root");
+
+  function render(){
+    var s=state.settings;
+    var view=state.ui.view;
+    var hasSamples = state.lessons.some(function(l){ return l.sample; }) || state.bills.some(function(b){ return b.sample; });
+    var showHelp = hasSamples && !state.ui.helpDismissed;
+    var allOn = state.ui.filter.length===5;
+
+    var h = "";
+    h += "<div class=\"wrap\">";
+    h += "<header class=\"hd\">";
+    h +=   "<div class=\"brand\"><h1>"+esc(s.title||"The Lesson Book")+"</h1><p>"+esc(s.subtitle||"")+"</p></div>";
+    h +=   "<div class=\"hd-actions\">";
+    h +=     (view==="billing"
+              ? "<button class=\"btn primary\" data-act=\"new-bill\">+ New bill</button>"
+              : "<button class=\"btn primary\" data-act=\"add\">+ Add lesson</button>");
+    h +=     "<button class=\"btn icon\" data-act=\"settings\" aria-label=\"Settings\" title=\"Teachers &amp; settings\">&#9881;</button>";
+    h +=     "<button class=\"btn icon\" data-act=\"print\" aria-label=\"Print\" title=\"Print\">&#9113;</button>";
+    h +=   "</div>";
+    h += "</header>";
+
+    if(showHelp){
+      h += "<div class=\"help\">";
+      h +=   "<span><b>Sample data</b> is shown so you can see the layout. Click any item to edit it, or add your own.</span>";
+      h +=   "<span class=\"spacer\"></span>";
+      h +=   "<button class=\"linkish\" data-act=\"clear-samples\">Delete all samples</button>";
+      h +=   "<button class=\"btn ghost\" data-act=\"dismiss-help\" aria-label=\"Dismiss\">&times;</button>";
+      h += "</div>";
+    }
+
+    h += "<div class=\"bar\">";
+    h +=   "<div class=\"seg\" role=\"tablist\" aria-label=\"View\">";
+    h +=     "<button role=\"tab\" aria-selected=\""+(view==="week")+"\" data-act=\"view\" data-v=\"week\">Week</button>";
+    h +=     "<button role=\"tab\" aria-selected=\""+(view==="month")+"\" data-act=\"view\" data-v=\"month\">Month</button>";
+    h +=     "<button role=\"tab\" aria-selected=\""+(view==="billing")+"\" data-act=\"view\" data-v=\"billing\">Billing</button>";
+    h +=   "</div>";
+
+    if(view==="month"){
+      h += "<div class=\"nav\">";
+      h +=   "<button class=\"btn ghost arw\" data-act=\"mprev\" aria-label=\"Previous month\">&#8249;</button>";
+      h +=   "<strong>"+cursor.toLocaleDateString(undefined,{month:"long",year:"numeric"})+"</strong>";
+      h +=   "<button class=\"btn ghost arw\" data-act=\"mnext\" aria-label=\"Next month\">&#8250;</button>";
+      h +=   "<button class=\"btn ghost today-btn\" data-act=\"today\">Today</button>";
+      h += "</div>";
+    } else if(view==="billing"){
+      h += "<div class=\"bfilter\">";
+      ["all","unpaid","partial","paid"].forEach(function(f){
+        h += "<button class=\"chip sf\" data-act=\"bfilter\" data-f=\""+f+"\" aria-pressed=\""+(state.ui.billFilter===f)+"\">"+f+"</button>";
+      });
+      var months={}; state.bills.forEach(function(b){ if(b.date) months[b.date.slice(0,7)]=1; });
+      var mk=Object.keys(months).sort().reverse();
+      if(mk.length){
+        h += "<select id=\"bmonth\"><option value=\"\">All months</option>";
+        mk.forEach(function(m){
+          var lbl=new Date(m+"-01T00:00:00").toLocaleDateString(undefined,{month:"short",year:"numeric"});
+          h += "<option value=\""+m+"\""+(state.ui.billMonth===m?" selected":"")+">"+lbl+"</option>";
+        });
+        h += "</select>";
+      }
+      h += "</div>";
+      h += "<div class=\"bill-actions\"><button class=\"btn\" data-act=\"rates\">Rates &amp; packages</button></div>";
+    } else {
+      h += "<div class=\"wk-cap\">Standing weekly schedule</div>";
+    }
+
+    if(view!=="billing"){
+      h += "<div class=\"chips\">";
+      h +=   "<button class=\"chip all\" data-act=\"filter-all\" aria-pressed=\""+allOn+"\">All teachers</button>";
+      state.teachers.forEach(function(t){
+        var on = state.ui.filter.indexOf(t.id)>=0;
+        h += "<button class=\"chip\" data-act=\"filter\" data-id=\""+t.id+"\" aria-pressed=\""+on+"\" style=\""+tvars(t.id)+"\"><span class=\"dot\"></span>"+esc(tlabel(t.id))+"</button>";
+      });
+      h += "</div>";
+    }
+    h += "</div>";
+
+    h += "<div id=\"view\">"+(view==="week"? weekHTML() : view==="month"? monthHTML() : billingHTML())+"</div>";
+    h += "</div>";
+    root.innerHTML = h;
+    bind();
+  }
+
+  function weekHTML(){
+    var s=state.settings, ds=s.dayStart, de=s.dayEnd;
+    var hrs=Math.max(1, de-ds);
+    var C=cols();
+    var out="<div class=\"scroll\"><div class=\"wk\" style=\"--hour:"+HOUR+"px\">";
+    out+="<div class=\"wk-head\"><div class=\"cnr\"></div>";
+    C.forEach(function(dw){ out+="<div class=\"wk-dh\">"+DOW[dw]+"</div>"; });
+    out+="</div>";
+    out+="<div class=\"wk-body\" style=\"height:"+(hrs*HOUR)+"px\">";
+    out+="<div class=\"gutter\">";
+    for(var hh=ds; hh<de; hh++){ out+="<div class=\"hl\" style=\"top:"+((hh-ds)*HOUR)+"px\">"+fmtHour(hh)+"</div>"; }
+    out+="</div>";
+    var total=0;
+    C.forEach(function(dw){
+      out+="<div class=\"daycol\" data-dw=\""+dw+"\">";
+      var its = state.lessons.filter(function(l){ return visible(l) && l.recurrence==="weekly" && l.dow===dw; })
+        .map(function(l){ var st=toMin(l.start); return {l:l,s:st,e:st+(l.mins||30)}; });
+      layout(its);
+      total += its.length;
+      its.forEach(function(it){
+        var l=it.l;
+        var top=Math.max(0,(it.s-ds*60)/60*HOUR);
+        var hgt=Math.max(16,(it.e-it.s)/60*HOUR-2);
+        var w = 100/it.lanes, left = it.lane*w;
+        var style = tvars(l.teacher)+";top:"+top.toFixed(1)+"px;height:"+hgt.toFixed(1)+"px;left:"+left+"%;width:calc("+w+"% - 4px)";
+        out+="<button class=\"ev"+(hgt<40?" short":"")+"\" data-act=\"edit\" data-id=\""+l.id+"\" style=\""+style+"\">";
+        out+="<span class=\"ev-t\">"+fmt12(l.start)+"</span><span class=\"ev-s\">"+esc(l.student||"(no name)")+"</span>";
+        if(hgt>44 && l.notes) out+="<span class=\"ev-n\">"+esc(l.notes)+"</span>";
+        out+="</button>";
+      });
+      out+="</div>";
+    });
+    out+="</div></div></div>";
+    if(total===0) out+="<div class=\"empty\"><h3>No weekly lessons yet</h3><p>Click a time slot above, or use &ldquo;+ Add lesson&rdquo;. One-time lessons show up in Month view.</p></div>";
+    return out;
+  }
+
+  function monthHTML(){
+    var C=cols();
+    var first=new Date(cursor);
+    var startIdx=C.indexOf(first.getDay());
+    var start=new Date(first); start.setDate(first.getDate()-startIdx);
+    var todayIso=iso(new Date());
+    var mo=cursor.getMonth();
+    var out="<div class=\"scroll\"><div class=\"mo\">";
+    out+="<div class=\"mo-head\">";
+    C.forEach(function(dw){ out+="<div>"+DOWL[dw]+"</div>"; });
+    out+="</div><div class=\"mo-grid\">";
+    for(var i=0;i<42;i++){
+      var d=new Date(start); d.setDate(start.getDate()+i);
+      var di=iso(d);
+      var cls="mo-cell"+(d.getMonth()!==mo?" out":"")+(di===todayIso?" today":"");
+      out+="<div class=\""+cls+"\" data-act=\"day\" data-date=\""+di+"\">";
+      out+="<span class=\"mo-d\">"+d.getDate()+"</span>";
+      var its=itemsFor(d);
+      its.slice(0,3).forEach(function(l){
+        out+="<button class=\"pill\" data-act=\"edit\" data-id=\""+l.id+"\" style=\""+tvars(l.teacher)+"\"><span class=\"pdot\"></span><span class=\"pt\">"+fmt12(l.start)+"</span><span class=\"ps\">"+esc(l.student||"(no name)")+"</span></button>";
+      });
+      if(its.length>3) out+="<button class=\"more\" data-act=\"day\" data-date=\""+di+"\">+"+(its.length-3)+" more</button>";
+      out+="</div>";
+    }
+    out+="</div></div></div>";
+    return out;
+  }
+
+  // ---- billing ----
+  function billingHTML(){
+    var f=state.ui.billFilter||"all", mm=state.ui.billMonth||"";
+    var rows = state.bills.slice().sort(function(a,b){
+      return (b.date||"").localeCompare(a.date||"") || (String(b.id)<String(a.id)?-1:1);
+    });
+    var shown = rows.filter(function(b){
+      var c=billCalc(b);
+      if(f!=="all" && c.status!==f) return false;
+      if(mm && (b.date||"").slice(0,7)!==mm) return false;
+      return true;
+    });
+    var billed=0, collected=0;
+    shown.forEach(function(b){ var c=billCalc(b); billed+=c.tot; collected+=Math.min(c.paid,c.tot); });
+
+    var out="";
+    out+="<div class=\"stats\">";
+    out+="<div class=\"stat\"><div class=\"k\">Billed</div><div class=\"v\">"+money(billed)+"</div></div>";
+    out+="<div class=\"stat coll\"><div class=\"k\">Collected</div><div class=\"v\">"+money(collected)+"</div></div>";
+    out+="<div class=\"stat out\"><div class=\"k\">Outstanding</div><div class=\"v\">"+money(billed-collected)+"</div></div>";
+    out+="</div>";
+
+    if(!state.bills.length){
+      out+="<div class=\"empty\"><h3>No bills yet</h3><p>Click &ldquo;+ New bill&rdquo; to record a student's lessons and payment. Rates come from &ldquo;Rates &amp; packages&rdquo;.</p></div>";
+      return out;
+    }
+
+    out+="<div class=\"tbl-wrap\"><table class=\"tbl\"><thead><tr>";
+    out+="<th>Date</th><th>Student</th><th>Lessons</th><th class=\"num\">Qty</th><th class=\"num\">Rate</th><th class=\"num\">Discount</th><th class=\"num\">Total</th><th class=\"num\">Paid</th><th class=\"num\">Balance</th><th>Status</th><th></th>";
+    out+="</tr></thead><tbody>";
+    shown.forEach(function(b){
+      var c=billCalc(b), t=teacher(b.instrument), pk=b.packageId?pkgById(b.packageId):null;
+      out+="<tr data-act=\"edit-bill\" data-id=\""+b.id+"\">";
+      out+="<td class=\"dt\">"+esc(b.date||"")+"</td>";
+      out+="<td class=\"stu\">"+esc(b.student||"—")+"</td>";
+      out+="<td><span class=\"lz\" style=\"--c:var(--"+b.instrument+")\"><span class=\"dot\"></span>"+esc(t.label)+"</span>"
+          + "<span class=\"badge\">"+(b.clientType==="foreign"?"Abroad":"Local")+"</span>"
+          + (pk?"<span class=\"badge pack\">"+(+pk.sessions)+"-pack</span>":"")+"</td>";
+      out+="<td class=\"num\">"+(+b.sessions||0)+"</td>";
+      out+="<td class=\"num\">"+money(b.unitRate)+"</td>";
+      out+="<td class=\"num\">"+(c.disc>0?"&minus;"+money(c.disc):"&mdash;")+"</td>";
+      out+="<td class=\"num\">"+money(c.tot)+"</td>";
+      out+="<td class=\"num\">"+money(Math.min(c.paid,c.tot))+"</td>";
+      out+="<td class=\"num\">"+money(c.bal)+"</td>";
+      out+="<td><span class=\"pill-s "+c.status+"\">"+c.status+"</span></td>";
+      out+="<td>"+(c.status!=="paid"?"<button class=\"mini\" data-act=\"mark-paid\" data-id=\""+b.id+"\">Mark paid</button>":"")+"</td>";
+      out+="</tr>";
+    });
+    out+="</tbody></table></div>";
+    if(!shown.length) out+="<p class=\"hint\">No bills match this filter.</p>";
+    return out;
+  }
+
+  // ---- events ----
+  function bind(){
+    root.querySelectorAll("[data-act]").forEach(function(el){
+      el.addEventListener("click", onAct);
+    });
+    var bm=root.querySelector("#bmonth");
+    if(bm) bm.addEventListener("change", function(){ state.ui.billMonth=bm.value; commit(); render(); });
+    root.querySelectorAll(".daycol").forEach(function(col){
+      col.addEventListener("click", function(e){
+        if(e.target.closest(".ev")) return;
+        var rect=col.getBoundingClientRect();
+        var y=e.clientY-rect.top;
+        var raw=state.settings.dayStart*60 + y/HOUR*60;
+        var mins=Math.round(raw/15)*15;
+        mins=Math.max(state.settings.dayStart*60, Math.min(mins, state.settings.dayEnd*60-30));
+        openLesson(null,{recurrence:"weekly",dow:+col.getAttribute("data-dw"),start:fromMin(mins)});
+      });
+    });
+  }
+
+  function onAct(e){
+    var el=e.currentTarget, act=el.getAttribute("data-act");
+    if(act!=="day") e.stopPropagation();
+    if(act==="add"){ openLesson(null,null); }
+    else if(act==="edit"){ var l=find(el.getAttribute("data-id")); if(l) openLesson(l,null); }
+    else if(act==="view"){ state.ui.view=el.getAttribute("data-v"); commit(); render(); }
+    else if(act==="mprev"){ cursor.setMonth(cursor.getMonth()-1); render(); }
+    else if(act==="mnext"){ cursor.setMonth(cursor.getMonth()+1); render(); }
+    else if(act==="today"){ cursor=new Date(); cursor.setDate(1); cursor.setHours(0,0,0,0); render(); }
+    else if(act==="filter-all"){ state.ui.filter = state.ui.filter.length===5 ? [] : TIDS.slice(); if(!state.ui.filter.length) state.ui.filter=TIDS.slice(); commit(); render(); }
+    else if(act==="filter"){
+      var id=el.getAttribute("data-id"), k=state.ui.filter.indexOf(id);
+      if(k>=0) state.ui.filter.splice(k,1); else state.ui.filter.push(id);
+      if(!state.ui.filter.length) state.ui.filter=TIDS.slice();
+      commit(); render();
+    }
+    else if(act==="settings"){ openSettings(); }
+    else if(act==="print"){ window.print(); }
+    else if(act==="dismiss-help"){ state.ui.helpDismissed=true; commit(); render(); }
+    else if(act==="clear-samples"){
+      state.lessons=state.lessons.filter(function(l){ return !l.sample; });
+      state.bills=state.bills.filter(function(b){ return !b.sample; });
+      commit(); render();
+    }
+    else if(act==="day"){ openDay(el.getAttribute("data-date")); }
+    else if(act==="new-bill"){ openBill(null); }
+    else if(act==="edit-bill"){ var b=findBill(el.getAttribute("data-id")); if(b) openBill(b); }
+    else if(act==="mark-paid"){ var mb=findBill(el.getAttribute("data-id")); if(mb){ mb.paidAmount=billCalc(mb).tot; commit(); render(); } }
+    else if(act==="bfilter"){ state.ui.billFilter=el.getAttribute("data-f"); commit(); render(); }
+    else if(act==="rates"){ openRates(); }
+  }
+
+  function find(id){ for(var i=0;i<state.lessons.length;i++) if(state.lessons[i].id===id) return state.lessons[i]; return null; }
+
+  // ---- modal shell ----
+  var overlay=null;
+  function modal(html){
+    close();
+    overlay=document.createElement("div");
+    overlay.className="overlay";
+    overlay.innerHTML="<div class=\"modal\" role=\"dialog\" aria-modal=\"true\">"+html+"</div>";
+    overlay.addEventListener("mousedown",function(e){ if(e.target===overlay) close(); });
+    document.body.appendChild(overlay);
+    document.addEventListener("keydown",onKey);
+    var f=overlay.querySelector("input,select,textarea,button");
+    if(f) f.focus();
+    return overlay.querySelector(".modal");
+  }
+  function close(){
+    if(overlay){ overlay.remove(); overlay=null; document.removeEventListener("keydown",onKey); }
+  }
+  function onKey(e){ if(e.key==="Escape") close(); }
+
+  // ---- lesson modal ----
+  function openLesson(existing, prefill){
+    var l = existing ? JSON.parse(JSON.stringify(existing)) : {
+      id:null, teacher:(prefill&&prefill.teacher)||state.ui.filter[0]||"piano",
+      student:"", recurrence:(prefill&&prefill.recurrence)||"weekly",
+      dow:(prefill&&prefill.dow!=null)?prefill.dow:1,
+      date:(prefill&&prefill.date)||iso(new Date()),
+      start:(prefill&&prefill.start)||"15:00", mins:60, notes:""
+    };
+    var C=cols();
+    var h="";
+    h+="<h2>"+(existing?"Edit lesson":"New lesson")+"</h2>";
+    h+="<div class=\"err\" id=\"lerr\" hidden></div>";
+    h+="<div class=\"fld\"><label for=\"f-t\">Instrument / teacher</label><select id=\"f-t\">";
+    state.teachers.forEach(function(t){ h+="<option value=\""+t.id+"\""+(t.id===l.teacher?" selected":"")+">"+esc(tlabel(t.id))+"</option>"; });
+    h+="</select></div>";
+    h+="<div class=\"fld\"><label for=\"f-s\">Student name</label><input id=\"f-s\" type=\"text\" value=\""+esc(l.student)+"\" placeholder=\"e.g. Mia Reyes\" autocomplete=\"off\"></div>";
+    h+="<div class=\"fld\"><label>Repeats</label><div class=\"rep\">";
+    h+="<button type=\"button\" data-rep=\"weekly\" aria-pressed=\""+(l.recurrence==="weekly")+"\">Every week</button>";
+    h+="<button type=\"button\" data-rep=\"once\" aria-pressed=\""+(l.recurrence==="once")+"\">One time</button>";
+    h+="</div></div>";
+    h+="<div class=\"fld\" id=\"wrap-dow\""+(l.recurrence==="once"?" hidden":"")+"><label for=\"f-d\">Day of week</label><select id=\"f-d\">";
+    C.forEach(function(dw){ h+="<option value=\""+dw+"\""+(dw===l.dow?" selected":"")+">"+DOWL[dw]+"</option>"; });
+    h+="</select></div>";
+    h+="<div class=\"fld\" id=\"wrap-date\""+(l.recurrence==="weekly"?" hidden":"")+"><label for=\"f-date\">Date</label><input id=\"f-date\" type=\"date\" value=\""+esc(l.date)+"\"></div>";
+    h+="<div class=\"row2\">";
+    h+="<div class=\"fld\"><label for=\"f-start\">Start time</label><input id=\"f-start\" type=\"time\" step=\"300\" value=\""+esc(l.start)+"\"></div>";
+    h+="<div class=\"fld\"><label for=\"f-len\">Length</label><select id=\"f-len\">";
+    [60,30,45,90,15].forEach(function(m){ h+="<option value=\""+m+"\""+(m===(l.mins||60)?" selected":"")+">"+m+" min"+(m===60?" (1 hr)":"")+"</option>"; });
+    h+="</select></div></div>";
+    h+="<div class=\"fld\"><label for=\"f-n\">Notes <span style=\"text-transform:none;letter-spacing:0\">(optional)</span></label><textarea id=\"f-n\" placeholder=\"Level, focus, parent contact…\">"+esc(l.notes)+"</textarea></div>";
+    h+="<div class=\"m-act\">";
+    if(existing) h+="<button class=\"btn danger\" id=\"f-del\">Delete</button>";
+    h+="<span class=\"grow\"></span><button class=\"btn\" id=\"f-cancel\">Cancel</button><button class=\"btn primary\" id=\"f-save\">"+(existing?"Save":"Add lesson")+"</button>";
+    h+="</div>";
+
+    var m=modal(h);
+    var rec=l.recurrence;
+    m.querySelectorAll("[data-rep]").forEach(function(b){
+      b.addEventListener("click",function(){
+        rec=b.getAttribute("data-rep");
+        m.querySelectorAll("[data-rep]").forEach(function(x){ x.setAttribute("aria-pressed", x===b); });
+        m.querySelector("#wrap-dow").hidden = rec!=="weekly";
+        m.querySelector("#wrap-date").hidden = rec!=="once";
+      });
+    });
+    m.querySelector("#f-cancel").addEventListener("click",close);
+    if(existing) m.querySelector("#f-del").addEventListener("click",function(){
+      var b=this;
+      if(b.getAttribute("data-armed")){ state.lessons=state.lessons.filter(function(x){ return x.id!==l.id; }); commit(); close(); render(); }
+      else { b.setAttribute("data-armed","1"); b.textContent="Click again to delete"; }
+    });
+    m.querySelector("#f-save").addEventListener("click",function(){
+      var teacher=m.querySelector("#f-t").value;
+      var student=m.querySelector("#f-s").value.trim();
+      var start=m.querySelector("#f-start").value;
+      var mins=+m.querySelector("#f-len").value;
+      var notes=m.querySelector("#f-n").value.trim();
+      var err=m.querySelector("#lerr");
+      if(!student){ err.textContent="Please enter the student's name."; err.hidden=false; m.querySelector("#f-s").focus(); return; }
+      if(!start){ err.textContent="Please choose a start time."; err.hidden=false; return; }
+      var rowset={ teacher:teacher, student:student, recurrence:rec, start:start, mins:mins, notes:notes };
+      if(rec==="weekly"){ rowset.dow=+m.querySelector("#f-d").value; }
+      else {
+        var dv=m.querySelector("#f-date").value;
+        if(!dv){ err.textContent="Please choose a date."; err.hidden=false; return; }
+        rowset.date=dv;
+      }
+      if(existing){
+        var cur=find(l.id);
+        Object.keys(rowset).forEach(function(k){ cur[k]=rowset[k]; });
+        if(rec==="weekly") delete cur.date; else delete cur.dow;
+        delete cur.sample;
+      } else {
+        rowset.id=uid();
+        state.lessons.push(rowset);
+      }
+      commit(); close();
+      if(rec==="once"){ cursor=new Date(rowset.date+"T00:00:00"); cursor.setDate(1); }
+      render();
+    });
+  }
+
+  // ---- day modal ----
+  function openDay(dstr){
+    var d=new Date(dstr+"T00:00:00");
+    var its=itemsFor(d);
+    var h="<h2>"+d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})+"</h2>";
+    if(!its.length){ h+="<p class=\"hint\" style=\"margin-top:0\">No lessons scheduled.</p>"; }
+    else{
+      h+="<div class=\"daylist\">";
+      its.forEach(function(l){
+        h+="<button data-id=\""+l.id+"\"><span class=\"swatch\" style=\"background:var(--"+l.teacher+")\"></span><span class=\"pt\">"+fmt12(l.start)+"</span> "+esc(l.student||"(no name)")+"<span class=\"tag\">"+esc(teacher(l.teacher).label)+(l.recurrence==="weekly"?" · weekly":"")+"</span></button>";
+      });
+      h+="</div>";
+    }
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"d-close\">Close</button><button class=\"btn primary\" id=\"d-add\">+ Add on this day</button></div>";
+    var m=modal(h);
+    m.querySelector("#d-close").addEventListener("click",close);
+    m.querySelector("#d-add").addEventListener("click",function(){ close(); openLesson(null,{recurrence:"once",date:dstr}); });
+    m.querySelectorAll(".daylist button").forEach(function(b){
+      b.addEventListener("click",function(){ var l=find(b.getAttribute("data-id")); close(); if(l) openLesson(l,null); });
+    });
+  }
+
+  // ---- settings modal ----
+  function openSettings(){
+    var s=state.settings;
+    var h="<h2>Teachers &amp; settings</h2>";
+    h+="<div class=\"fld\"><label for=\"g-title\">Calendar title</label><input id=\"g-title\" type=\"text\" value=\""+esc(s.title)+"\"></div>";
+    h+="<div class=\"fld\"><label for=\"g-sub\">Subtitle</label><input id=\"g-sub\" type=\"text\" value=\""+esc(s.subtitle)+"\"></div>";
+    h+="<div class=\"fld\"><label>Teacher names</label>";
+    state.teachers.forEach(function(t){
+      h+="<div style=\"display:flex;align-items:center;gap:8px;margin-bottom:6px\"><span class=\"swatch\" style=\"background:var(--"+t.id+")\"></span><span style=\"font-family:var(--f-mono);font-size:11px;width:64px;color:var(--muted)\">"+t.label+"</span><input data-tid=\""+t.id+"\" type=\"text\" value=\""+esc(t.name)+"\" placeholder=\"teacher's name\" style=\"flex:1\"></div>";
+    });
+    h+="</div>";
+    h+="<div class=\"row2\">";
+    h+="<div class=\"fld\"><label for=\"g-ws\">Week starts</label><select id=\"g-ws\"><option value=\"1\""+(s.weekStartsMon?" selected":"")+">Monday</option><option value=\"0\""+(!s.weekStartsMon?" selected":"")+">Sunday</option></select></div>";
+    h+="<div class=\"fld\"><label>&nbsp;</label><div></div></div>";
+    h+="</div>";
+    h+="<div class=\"row2\">";
+    h+="<div class=\"fld\"><label for=\"g-ds\">Day starts</label><select id=\"g-ds\">"+hourOpts(s.dayStart,5,21)+"</select></div>";
+    h+="<div class=\"fld\"><label for=\"g-de\">Day ends</label><select id=\"g-de\">"+hourOpts(s.dayEnd,8,23)+"</select></div>";
+    h+="</div>";
+    h+="<p class=\"hint\">Everything you enter is saved automatically. Use Print to hand your brother a paper copy.</p>";
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"g-cancel\">Cancel</button><button class=\"btn primary\" id=\"g-save\">Save</button></div>";
+    var m=modal(h);
+    m.querySelector("#g-cancel").addEventListener("click",close);
+    m.querySelector("#g-save").addEventListener("click",function(){
+      s.title=m.querySelector("#g-title").value.trim()||"The Lesson Book";
+      s.subtitle=m.querySelector("#g-sub").value.trim();
+      s.weekStartsMon = m.querySelector("#g-ws").value==="1";
+      var dsv=+m.querySelector("#g-ds").value, dev=+m.querySelector("#g-de").value;
+      if(dev<=dsv) dev=dsv+1;
+      s.dayStart=dsv; s.dayEnd=dev;
+      m.querySelectorAll("[data-tid]").forEach(function(inp){ teacher(inp.getAttribute("data-tid")).name = inp.value.trim(); });
+      commit(); close(); render();
+    });
+  }
+  function hourOpts(sel,a,b){ var o=""; for(var hh=a;hh<=b;hh++){ o+="<option value=\""+hh+"\""+(hh===sel?" selected":"")+">"+fmtHour(hh)+"</option>"; } return o; }
+
+  // ---- bill modal ----
+  function openBill(existing){
+    var b = existing ? JSON.parse(JSON.stringify(existing)) : {
+      id:null, date:iso(new Date()), student:"", instrument:"piano",
+      clientType:"local", packageId:null, sessions:1, unitRate:rateFor("piano","local"),
+      discount:0, paidAmount:0, notes:""
+    };
+    var names={}; state.lessons.forEach(function(l){ if(l.student) names[l.student]=1; });
+    state.bills.forEach(function(x){ if(x.student) names[x.student]=1; });
+
+    var h="";
+    h+="<h2>"+(existing?"Edit bill":"New bill")+"</h2>";
+    h+="<div class=\"err\" id=\"berr\" hidden></div>";
+    h+="<div class=\"row2\">";
+    h+="<div class=\"fld\"><label for=\"b-date\">Date</label><input id=\"b-date\" type=\"date\" value=\""+esc(b.date)+"\"></div>";
+    h+="<div class=\"fld\"><label for=\"b-stu\">Student</label><input id=\"b-stu\" type=\"text\" list=\"b-names\" autocomplete=\"off\" value=\""+esc(b.student)+"\" placeholder=\"Student name\"></div>";
+    h+="</div>";
+    h+="<datalist id=\"b-names\">"+Object.keys(names).map(function(n){ return "<option value=\""+esc(n)+"\">"; }).join("")+"</datalist>";
+    h+="<div class=\"row2\">";
+    h+="<div class=\"fld\"><label for=\"b-inst\">Instrument</label><select id=\"b-inst\">"+instOpts(b.instrument)+"</select></div>";
+    h+="<div class=\"fld\"><label>Client</label><div class=\"rep\">";
+    h+="<button type=\"button\" data-ct=\"local\" aria-pressed=\""+(b.clientType!=="foreign")+"\">Local</button>";
+    h+="<button type=\"button\" data-ct=\"foreign\" aria-pressed=\""+(b.clientType==="foreign")+"\">Foreigner / abroad</button>";
+    h+="</div></div>";
+    h+="</div>";
+    h+="<div class=\"ckline\" id=\"b-pkgwrap\" hidden><input type=\"checkbox\" id=\"b-pkg\"><label for=\"b-pkg\" id=\"b-pkglabel\" style=\"cursor:pointer\"></label></div>";
+    h+="<div class=\"row2\">";
+    h+="<div class=\"fld\"><label for=\"b-ses\">Sessions</label><input id=\"b-ses\" type=\"number\" min=\"1\" step=\"1\" value=\""+(+b.sessions||1)+"\"></div>";
+    h+="<div class=\"fld\"><label for=\"b-rate\">Rate / session</label><input id=\"b-rate\" type=\"number\" min=\"0\" step=\"50\" value=\""+(+b.unitRate||0)+"\"></div>";
+    h+="</div>";
+    h+="<div class=\"row2\">";
+    h+="<div class=\"fld\"><label for=\"b-disc\">Discount</label><input id=\"b-disc\" type=\"number\" min=\"0\" step=\"50\" value=\""+(+b.discount||0)+"\"></div>";
+    h+="<div class=\"fld\"><label for=\"b-paid\">Amount paid</label><input id=\"b-paid\" type=\"number\" min=\"0\" step=\"50\" value=\""+(+b.paidAmount||0)+"\"></div>";
+    h+="</div>";
+    h+="<div class=\"calc\" id=\"b-calc\"></div>";
+    h+="<div class=\"fld\"><label for=\"b-notes\">Notes <span style=\"text-transform:none;letter-spacing:0\">(optional)</span></label><textarea id=\"b-notes\">"+esc(b.notes)+"</textarea></div>";
+    h+="<div class=\"m-act\">";
+    if(existing) h+="<button class=\"btn danger\" id=\"b-del\">Delete</button>";
+    h+="<span class=\"grow\"></span><button class=\"btn\" id=\"b-cancel\">Cancel</button><button class=\"btn primary\" id=\"b-save\">"+(existing?"Save":"Add bill")+"</button>";
+    h+="</div>";
+
+    var m=modal(h);
+    var ct=b.clientType==="foreign"?"foreign":"local";
+    var pkgOn = !!b.packageId;
+    var q=function(id){ return m.querySelector(id); };
+
+    function curPkg(){ return pkgsFor(q("#b-inst").value, ct)[0] || null; }
+
+    function syncPkgUI(){
+      var pk=curPkg();
+      if(pk){
+        q("#b-pkgwrap").hidden=false;
+        q("#b-pkglabel").textContent = "Apply "+pk.label+" — "+pk.sessions+" sessions, "+money(pk.discount)+" off";
+        q("#b-pkg").checked = pkgOn;
+      } else {
+        if(pkgOn){ q("#b-disc").value=0; }
+        q("#b-pkgwrap").hidden=true;
+        q("#b-pkg").checked = false;
+        pkgOn=false;
+      }
+      q("#b-ses").disabled = pkgOn;
+      q("#b-disc").disabled = pkgOn;
+      if(pkgOn && pk){ q("#b-ses").value=pk.sessions; q("#b-disc").value=pk.discount; }
+    }
+    function applyStdRate(){ q("#b-rate").value = rateFor(q("#b-inst").value, ct); }
+    function calc(){
+      var ses=+q("#b-ses").value||0, rate=+q("#b-rate").value||0, disc=Math.max(0,+q("#b-disc").value||0);
+      var sub=ses*rate, tot=Math.max(0,sub-disc), paid=Math.max(0,+q("#b-paid").value||0);
+      var c=q("#b-calc");
+      var s="<div class=\"r\"><span>"+ses+" &times; "+money(rate)+"</span><span>"+money(sub)+"</span></div>";
+      if(disc>0) s+="<div class=\"r\"><span>Discount</span><span>&minus;"+money(disc)+"</span></div>";
+      s+="<div class=\"r tot\"><span>Total</span><span>"+money(tot)+"</span></div>";
+      s+="<div class=\"r bal\"><span>Paid</span><span>"+money(Math.min(paid,tot))+"</span></div>";
+      s+="<div class=\"r bal\"><span>Balance</span><span>"+money(Math.max(0,tot-paid))+"</span></div>";
+      c.innerHTML=s;
+    }
+
+    m.querySelectorAll("[data-ct]").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        ct=btn.getAttribute("data-ct");
+        m.querySelectorAll("[data-ct]").forEach(function(x){ x.setAttribute("aria-pressed", x===btn); });
+        applyStdRate(); syncPkgUI(); calc();
+      });
+    });
+    q("#b-inst").addEventListener("change",function(){ applyStdRate(); syncPkgUI(); calc(); });
+    q("#b-pkg").addEventListener("change",function(){
+      pkgOn=q("#b-pkg").checked;
+      if(!pkgOn){ q("#b-disc").value=0; }
+      syncPkgUI(); calc();
+    });
+    ["#b-ses","#b-rate","#b-disc","#b-paid"].forEach(function(id){ q(id).addEventListener("input",calc); });
+
+    syncPkgUI(); calc();
+
+    q("#b-cancel").addEventListener("click",close);
+    if(existing) q("#b-del").addEventListener("click",function(){
+      var x=this;
+      if(x.getAttribute("data-armed")){ state.bills=state.bills.filter(function(z){ return z.id!==b.id; }); commit(); close(); render(); }
+      else { x.setAttribute("data-armed","1"); x.textContent="Click again to delete"; }
+    });
+    q("#b-save").addEventListener("click",function(){
+      var err=q("#berr");
+      var student=q("#b-stu").value.trim();
+      var ses=Math.max(1,Math.round(+q("#b-ses").value||0));
+      var rate=Math.max(0,+q("#b-rate").value||0);
+      if(!student){ err.textContent="Please enter the student's name."; err.hidden=false; q("#b-stu").focus(); return; }
+      var pk=curPkg();
+      var rec={
+        date:q("#b-date").value||iso(new Date()),
+        student:student,
+        instrument:q("#b-inst").value,
+        clientType:ct,
+        packageId:(pkgOn && pk)?pk.id:null,
+        sessions:(pkgOn && pk)?pk.sessions:ses,
+        unitRate:rate,
+        discount:(pkgOn && pk)?pk.discount:Math.max(0,+q("#b-disc").value||0),
+        paidAmount:Math.max(0,+q("#b-paid").value||0),
+        notes:q("#b-notes").value.trim()
+      };
+      if(existing){
+        var cur=findBill(b.id);
+        Object.keys(rec).forEach(function(k){ cur[k]=rec[k]; });
+        delete cur.sample;
+      } else {
+        rec.id=uid();
+        state.bills.push(rec);
+      }
+      commit(); close();
+      state.ui.view="billing";
+      render();
+    });
+  }
+
+  // ---- rates & packages modal ----
+  function pkgRowHTML(p){
+    p=p||{id:"",label:"",instrument:"piano",sessions:10,discount:0,localOnly:true,enabled:true};
+    var h="<div class=\"pkg\" data-pkg data-id=\""+esc(p.id||"")+"\">";
+    h+="<input type=\"text\" data-p=\"label\" value=\""+esc(p.label)+"\" placeholder=\"Package name\">";
+    h+="<div class=\"row2\"><select data-p=\"instrument\">"+instOpts(p.instrument)+"</select>";
+    h+="<input type=\"number\" min=\"1\" step=\"1\" data-p=\"sessions\" value=\""+(+p.sessions||1)+"\" placeholder=\"sessions\"></div>";
+    h+="<div class=\"row2\"><input type=\"number\" min=\"0\" step=\"50\" data-p=\"discount\" value=\""+(+p.discount||0)+"\" placeholder=\"discount off total\">";
+    h+="<label class=\"ck\"><input type=\"checkbox\" data-p=\"localOnly\""+(p.localOnly?" checked":"")+"> Locals only</label></div>";
+    h+="<div style=\"display:flex;align-items:center;gap:12px\"><label class=\"ck\"><input type=\"checkbox\" data-p=\"enabled\""+(p.enabled?" checked":"")+"> Enabled</label>";
+    h+="<span class=\"grow\" style=\"flex:1\"></span><button class=\"mini\" data-p=\"remove\" type=\"button\">Remove</button></div>";
+    h+="</div>";
+    return h;
+  }
+  function openRates(){
+    var r=state.rates;
+    var h="<h2>Rates &amp; packages</h2>";
+    h+="<p class=\"hint\" style=\"margin-top:0;margin-bottom:12px\">Per 1-hour session, in "+esc(r.currency||"PHP")+" ("+esc(r.symbol||"₱")+"). Leave a rate at 0 if you don't teach it.</p>";
+    h+="<div class=\"rategrid\"><div class=\"h\">Instrument</div><div class=\"h\">Local</div><div class=\"h\">Abroad</div>";
+    state.teachers.forEach(function(t){
+      var pr=r.perInstrument[t.id]||{local:0,foreign:0};
+      h+="<div class=\"lbl\"><span class=\"swatch\" style=\"background:var(--"+t.id+")\"></span>"+esc(t.label)+"</div>";
+      h+="<input type=\"number\" min=\"0\" step=\"50\" data-rl=\""+t.id+"\" value=\""+(+pr.local||0)+"\">";
+      h+="<input type=\"number\" min=\"0\" step=\"50\" data-rf=\""+t.id+"\" value=\""+(+pr.foreign||0)+"\">";
+    });
+    h+="</div>";
+    h+="<div style=\"font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px\">Packages</div>";
+    h+="<div id=\"pkgs\">"+(r.packages||[]).map(pkgRowHTML).join("")+"</div>";
+    h+="<button class=\"mini\" id=\"pkg-add\" type=\"button\">+ Add package</button>";
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"r-cancel\">Cancel</button><button class=\"btn primary\" id=\"r-save\">Save</button></div>";
+    var m=modal(h);
+
+    function bindRemoves(){
+      m.querySelectorAll("[data-p='remove']").forEach(function(btn){
+        btn.onclick=function(){ btn.closest("[data-pkg]").remove(); };
+      });
+    }
+    bindRemoves();
+    m.querySelector("#pkg-add").addEventListener("click",function(){
+      var wrap=document.createElement("div");
+      wrap.innerHTML=pkgRowHTML();
+      m.querySelector("#pkgs").appendChild(wrap.firstChild);
+      bindRemoves();
+    });
+    m.querySelector("#r-cancel").addEventListener("click",close);
+    m.querySelector("#r-save").addEventListener("click",function(){
+      state.teachers.forEach(function(t){
+        var lv=m.querySelector("[data-rl='"+t.id+"']"), fv=m.querySelector("[data-rf='"+t.id+"']");
+        state.rates.perInstrument[t.id]={ local:Math.max(0,+lv.value||0), foreign:Math.max(0,+fv.value||0) };
+      });
+      var pk=[];
+      m.querySelectorAll("[data-pkg]").forEach(function(w){
+        var g=function(s){ return w.querySelector("[data-p='"+s+"']"); };
+        var lbl=(g("label").value||"").trim();
+        if(!lbl) return;
+        pk.push({
+          id:w.getAttribute("data-id")||uid(),
+          label:lbl,
+          instrument:g("instrument").value,
+          sessions:Math.max(1,Math.round(+g("sessions").value||1)),
+          discount:Math.max(0,+g("discount").value||0),
+          localOnly:g("localOnly").checked,
+          enabled:g("enabled").checked
+        });
+      });
+      state.rates.packages=pk;
+      commit(); close(); render();
+    });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
