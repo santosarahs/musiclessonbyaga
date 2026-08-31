@@ -225,21 +225,6 @@ button{font-family:inherit}
 .ckline{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink); margin-bottom:13px}
 .ckline input{width:auto}
 
-/* ---- auth ---- */
-.gate{min-height:100vh; min-height:100dvh; display:grid; place-items:center; padding:24px}
-.gate-card{background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); width:min(400px,100%); padding:26px}
-.gate-card h1{font-family:var(--f-disp); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0 0 4px; text-wrap:balance}
-.gate-sub{color:var(--muted); font-size:13px; margin:0 0 18px}
-.gate-note{color:var(--faint); font-size:11px; line-height:1.5; margin:14px 0 0}
-.gate-remember{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); margin:-3px 0 12px}
-.gate-remember input{width:auto}
-.role-pill{display:inline-flex; align-items:center; align-self:center; font-family:var(--f-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:4px 9px; border-radius:999px; background:var(--panel-2); border:1px solid var(--line); color:var(--muted); white-space:nowrap}
-.role-pill.admin{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
-.role-pill.scheduler{background:var(--piano-bg); color:var(--piano-ink); border-color:transparent}
-.modal.ro input,.modal.ro select,.modal.ro textarea,.modal.ro .rep button{opacity:.7}
-.wrap.noedit .daycol{cursor:default}
-.wrap.noedit .tbl tbody tr,.wrap.noedit .mo-cell,.wrap.noedit .ev,.wrap.noedit .pill{cursor:pointer}
-
 @media (max-width:640px){
   .wrap{padding:16px 12px 48px}
   .bar{gap:10px}
@@ -293,8 +278,7 @@ button{font-family:inherit}
    {"id":"b2","date":"2026-08-28","student":"Liam T. (sample)","instrument":"guitar","clientType":"local","packageId":null,"sessions":4,"unitRate":500,"discount":0,"paidAmount":1000,"notes":"","sample":true},
    {"id":"b3","date":"2026-08-30","student":"Hans B. (sample)","instrument":"piano","clientType":"foreign","packageId":null,"sessions":4,"unitRate":600,"discount":0,"paidAmount":0,"notes":"Lives abroad","sample":true}
  ],
- "ui":{"view":"week","filter":["piano","guitar","voice","ukulele","drums"],"helpDismissed":false,"billFilter":"all","billMonth":""},
- "access":{"enabled":true,"codes":{}}
+ "ui":{"view":"week","filter":["piano","guitar","voice","ukulele","drums"],"helpDismissed":false,"billFilter":"all","billMonth":""}
 }
 </script>
 <div id="root"></div>
@@ -326,12 +310,9 @@ button{font-family:inherit}
       packages:[ {id:"piano12",label:"Piano · 12 sessions",instrument:"piano",sessions:12,discount:300,localOnly:true,enabled:true} ]
     },
     bills:[],
-    ui:{view:"week",filter:TIDS.slice(),helpDismissed:false,billFilter:"all",billMonth:""},
-    access:{enabled:true,codes:{}}
+    ui:{view:"week",filter:TIDS.slice(),helpDismissed:false,billFilter:"all",billMonth:""}
   };
   var LSKEY = "lesson-book-v1";
-  var SKEY  = "lesson-book-role";
-  var ROLE_LABEL = { view:"View only", scheduler:"Scheduler", admin:"Admin" };
 
   // ---- load state ----
   var state = null;
@@ -358,51 +339,6 @@ button{font-family:inherit}
   state.ui = Object.assign({}, DEFAULT.ui, state.ui||{});
   if(!Array.isArray(state.ui.filter) || !state.ui.filter.length) state.ui.filter = TIDS.slice();
   if(["week","month","billing"].indexOf(state.ui.view)<0) state.ui.view = "week";
-  if(!state.access || typeof state.access!=="object") state.access = { enabled:true, codes:{} };
-  if(typeof state.access.enabled!=="boolean") state.access.enabled = true;
-  if(!state.access.codes || typeof state.access.codes!=="object") state.access.codes = {};
-
-  // ---- auth ----
-  function acc(){ return state.access; }
-  function validRole(r){ return r==="view"||r==="scheduler"||r==="admin" ? !!acc().codes[r] : false; }
-  function roleForCode(code){
-    if(!code) return null;
-    var c=acc().codes;
-    if(c.admin && code===c.admin) return "admin";
-    if(c.scheduler && code===c.scheduler) return "scheduler";
-    if(c.view && code===c.view) return "view";
-    return null;
-  }
-  function storedRole(){
-    try{ var r=sessionStorage.getItem(SKEY); if(r) return r; }catch(e){}
-    try{ var r2=localStorage.getItem(SKEY); if(r2) return r2; }catch(e){}
-    return null;
-  }
-  function setStoredRole(r,remember){
-    try{ sessionStorage.setItem(SKEY,r); }catch(e){}
-    try{ if(remember) localStorage.setItem(SKEY,r); else localStorage.removeItem(SKEY); }catch(e){}
-  }
-  function clearStoredRole(){
-    try{ sessionStorage.removeItem(SKEY); }catch(e){}
-    try{ localStorage.removeItem(SKEY); }catch(e){}
-  }
-  var session = { role:null, remembered:false };
-  (function(){
-    if(!acc().enabled) return;
-    var r = storedRole();
-    if(validRole(r)){ session.role = r; }
-    else if(r){ clearStoredRole(); }
-  })();
-  function needSetup(){ return acc().enabled && !acc().codes.admin; }
-  function effRole(){ return acc().enabled ? session.role : "admin"; }
-  function can(what){
-    var r = effRole();
-    if(r==="admin") return true;
-    if(r==="scheduler") return what==="schedule";
-    return false;
-  }
-  function canPublish(){ return !acc().enabled || can("schedule"); }
-  function signOut(){ session.role=null; clearStoredRole(); render(); }
 
   // ---- persistence ----
   var cap = null, capReady = false;
@@ -414,7 +350,6 @@ button{font-family:inherit}
     try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){}
     if(saveT) clearTimeout(saveT);
     saveT = setTimeout(function(){
-      if(!canPublish()) return;
       if(cap && typeof cap.publish === "function"){
         try{ cap.publish(buildDoc(state)).catch(function(){}); }catch(e){}
       }
@@ -503,38 +438,21 @@ button{font-family:inherit}
 
   function render(){
     var s=state.settings;
-
-    if(acc().enabled && !session.role){
-      root.innerHTML = needSetup() ? setupHTML() : lockHTML();
-      bindGate();
-      return;
-    }
-
     var view=state.ui.view;
     var hasSamples = state.lessons.some(function(l){ return l.sample; }) || state.bills.some(function(b){ return b.sample; });
-    var showHelp = hasSamples && !state.ui.helpDismissed && can("schedule");
+    var showHelp = hasSamples && !state.ui.helpDismissed;
     var allOn = state.ui.filter.length===5;
 
     var h = "";
-    h += "<div class=\"wrap"+(can("schedule")?"":" noedit")+"\">";
+    h += "<div class=\"wrap\">";
     h += "<header class=\"hd\">";
     h +=   "<div class=\"brand\"><h1>"+esc(s.title||"The Lesson Book")+"</h1><p>"+esc(s.subtitle||"")+"</p></div>";
     h +=   "<div class=\"hd-actions\">";
-    if(acc().enabled && session.role){
-      h +=   "<span class=\"role-pill "+session.role+"\">"+ROLE_LABEL[session.role]+"</span>";
-    }
-    if(view==="billing" && can("billing")){
-      h +=   "<button class=\"btn primary\" data-act=\"new-bill\">+ New bill</button>";
-    } else if(view!=="billing" && can("schedule")){
-      h +=   "<button class=\"btn primary\" data-act=\"add\">+ Add lesson</button>";
-    }
-    if(can("admin")){
-      h +=   "<button class=\"btn icon\" data-act=\"settings\" aria-label=\"Settings\" title=\"Teachers, rates &amp; access\">&#9881;</button>";
-    }
+    h +=     (view==="billing"
+              ? "<button class=\"btn primary\" data-act=\"new-bill\">+ New bill</button>"
+              : "<button class=\"btn primary\" data-act=\"add\">+ Add lesson</button>");
+    h +=     "<button class=\"btn icon\" data-act=\"settings\" aria-label=\"Settings\" title=\"Teachers &amp; settings\">&#9881;</button>";
     h +=     "<button class=\"btn icon\" data-act=\"print\" aria-label=\"Print\" title=\"Print\">&#9113;</button>";
-    if(acc().enabled && session.role){
-      h +=   "<button class=\"btn ghost\" data-act=\"signout\">Sign out</button>";
-    }
     h +=   "</div>";
     h += "</header>";
 
@@ -577,9 +495,7 @@ button{font-family:inherit}
         h += "</select>";
       }
       h += "</div>";
-      if(can("admin")){
-        h += "<div class=\"bill-actions\"><button class=\"btn\" data-act=\"rates\">Rates &amp; packages</button></div>";
-      }
+      h += "<div class=\"bill-actions\"><button class=\"btn\" data-act=\"rates\">Rates &amp; packages</button></div>";
     } else {
       h += "<div class=\"wk-cap\">Standing weekly schedule</div>";
     }
@@ -711,7 +627,7 @@ button{font-family:inherit}
       out+="<td class=\"num\">"+money(Math.min(c.paid,c.tot))+"</td>";
       out+="<td class=\"num\">"+money(c.bal)+"</td>";
       out+="<td><span class=\"pill-s "+c.status+"\">"+c.status+"</span></td>";
-      out+="<td>"+((c.status!=="paid"&&can("billing"))?"<button class=\"mini\" data-act=\"mark-paid\" data-id=\""+b.id+"\">Mark paid</button>":"")+"</td>";
+      out+="<td>"+(c.status!=="paid"?"<button class=\"mini\" data-act=\"mark-paid\" data-id=\""+b.id+"\">Mark paid</button>":"")+"</td>";
       out+="</tr>";
     });
     out+="</tbody></table></div>";
@@ -726,7 +642,6 @@ button{font-family:inherit}
     });
     var bm=root.querySelector("#bmonth");
     if(bm) bm.addEventListener("change", function(){ state.ui.billMonth=bm.value; commit(); render(); });
-    if(!can("schedule")) return;
     root.querySelectorAll(".daycol").forEach(function(col){
       col.addEventListener("click", function(e){
         if(e.target.closest(".ev")) return;
@@ -743,13 +658,12 @@ button{font-family:inherit}
   function onAct(e){
     var el=e.currentTarget, act=el.getAttribute("data-act");
     if(act!=="day") e.stopPropagation();
-    if(act==="add"){ if(can("schedule")) openLesson(null,null); }
-    else if(act==="edit"){ var l=find(el.getAttribute("data-id")); if(l) openLesson(l,null,!can("schedule")); }
+    if(act==="add"){ openLesson(null,null); }
+    else if(act==="edit"){ var l=find(el.getAttribute("data-id")); if(l) openLesson(l,null); }
     else if(act==="view"){ state.ui.view=el.getAttribute("data-v"); commit(); render(); }
     else if(act==="mprev"){ cursor.setMonth(cursor.getMonth()-1); render(); }
     else if(act==="mnext"){ cursor.setMonth(cursor.getMonth()+1); render(); }
     else if(act==="today"){ cursor=new Date(); cursor.setDate(1); cursor.setHours(0,0,0,0); render(); }
-    else if(act==="signout"){ signOut(); }
     else if(act==="filter-all"){ state.ui.filter = state.ui.filter.length===5 ? [] : TIDS.slice(); if(!state.ui.filter.length) state.ui.filter=TIDS.slice(); commit(); render(); }
     else if(act==="filter"){
       var id=el.getAttribute("data-id"), k=state.ui.filter.indexOf(id);
@@ -757,21 +671,20 @@ button{font-family:inherit}
       if(!state.ui.filter.length) state.ui.filter=TIDS.slice();
       commit(); render();
     }
-    else if(act==="settings"){ if(can("admin")) openSettings(); }
+    else if(act==="settings"){ openSettings(); }
     else if(act==="print"){ window.print(); }
     else if(act==="dismiss-help"){ state.ui.helpDismissed=true; commit(); render(); }
     else if(act==="clear-samples"){
-      if(!can("schedule")) return;
       state.lessons=state.lessons.filter(function(l){ return !l.sample; });
-      if(can("billing")) state.bills=state.bills.filter(function(b){ return !b.sample; });
+      state.bills=state.bills.filter(function(b){ return !b.sample; });
       commit(); render();
     }
-    else if(act==="day"){ openDay(el.getAttribute("data-date"),!can("schedule")); }
-    else if(act==="new-bill"){ if(can("billing")) openBill(null,false); }
-    else if(act==="edit-bill"){ var b=findBill(el.getAttribute("data-id")); if(b) openBill(b,!can("billing")); }
-    else if(act==="mark-paid"){ if(!can("billing")) return; var mb=findBill(el.getAttribute("data-id")); if(mb){ mb.paidAmount=billCalc(mb).tot; commit(); render(); } }
+    else if(act==="day"){ openDay(el.getAttribute("data-date")); }
+    else if(act==="new-bill"){ openBill(null); }
+    else if(act==="edit-bill"){ var b=findBill(el.getAttribute("data-id")); if(b) openBill(b); }
+    else if(act==="mark-paid"){ var mb=findBill(el.getAttribute("data-id")); if(mb){ mb.paidAmount=billCalc(mb).tot; commit(); render(); } }
     else if(act==="bfilter"){ state.ui.billFilter=el.getAttribute("data-f"); commit(); render(); }
-    else if(act==="rates"){ if(can("admin")) openRates(); }
+    else if(act==="rates"){ openRates(); }
   }
 
   function find(id){ for(var i=0;i<state.lessons.length;i++) if(state.lessons[i].id===id) return state.lessons[i]; return null; }
@@ -796,7 +709,7 @@ button{font-family:inherit}
   function onKey(e){ if(e.key==="Escape") close(); }
 
   // ---- lesson modal ----
-  function openLesson(existing, prefill, ro){
+  function openLesson(existing, prefill){
     var l = existing ? JSON.parse(JSON.stringify(existing)) : {
       id:null, teacher:(prefill&&prefill.teacher)||state.ui.filter[0]||"piano",
       student:"", recurrence:(prefill&&prefill.recurrence)||"weekly",
@@ -806,7 +719,7 @@ button{font-family:inherit}
     };
     var C=cols();
     var h="";
-    h+="<h2>"+(ro?"Lesson":(existing?"Edit lesson":"New lesson"))+"</h2>";
+    h+="<h2>"+(existing?"Edit lesson":"New lesson")+"</h2>";
     h+="<div class=\"err\" id=\"lerr\" hidden></div>";
     h+="<div class=\"fld\"><label for=\"f-t\">Instrument / teacher</label><select id=\"f-t\">";
     state.teachers.forEach(function(t){ h+="<option value=\""+t.id+"\""+(t.id===l.teacher?" selected":"")+">"+esc(tlabel(t.id))+"</option>"; });
@@ -832,13 +745,6 @@ button{font-family:inherit}
     h+="</div>";
 
     var m=modal(h);
-    if(ro){
-      m.classList.add("ro");
-      m.querySelectorAll("input,select,textarea,[data-rep]").forEach(function(x){ x.disabled=true; });
-      m.querySelector(".m-act").innerHTML="<span class=\"grow\"></span><button class=\"btn\" id=\"f-close\">Close</button>";
-      m.querySelector("#f-close").addEventListener("click",close);
-      return;
-    }
     var rec=l.recurrence;
     m.querySelectorAll("[data-rep]").forEach(function(b){
       b.addEventListener("click",function(){
@@ -886,7 +792,7 @@ button{font-family:inherit}
   }
 
   // ---- day modal ----
-  function openDay(dstr, ro){
+  function openDay(dstr){
     var d=new Date(dstr+"T00:00:00");
     var its=itemsFor(d);
     var h="<h2>"+d.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})+"</h2>";
@@ -898,13 +804,12 @@ button{font-family:inherit}
       });
       h+="</div>";
     }
-    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"d-close\">Close</button>"
-      + (ro?"":"<button class=\"btn primary\" id=\"d-add\">+ Add on this day</button>")+"</div>";
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"d-close\">Close</button><button class=\"btn primary\" id=\"d-add\">+ Add on this day</button></div>";
     var m=modal(h);
     m.querySelector("#d-close").addEventListener("click",close);
-    if(!ro) m.querySelector("#d-add").addEventListener("click",function(){ close(); openLesson(null,{recurrence:"once",date:dstr}); });
+    m.querySelector("#d-add").addEventListener("click",function(){ close(); openLesson(null,{recurrence:"once",date:dstr}); });
     m.querySelectorAll(".daylist button").forEach(function(b){
-      b.addEventListener("click",function(){ var l=find(b.getAttribute("data-id")); close(); if(l) openLesson(l,null,ro); });
+      b.addEventListener("click",function(){ var l=find(b.getAttribute("data-id")); close(); if(l) openLesson(l,null); });
     });
   }
 
@@ -927,23 +832,11 @@ button{font-family:inherit}
     h+="<div class=\"fld\"><label for=\"g-ds\">Day starts</label><select id=\"g-ds\">"+hourOpts(s.dayStart,5,21)+"</select></div>";
     h+="<div class=\"fld\"><label for=\"g-de\">Day ends</label><select id=\"g-de\">"+hourOpts(s.dayEnd,8,23)+"</select></div>";
     h+="</div>";
-
-    var a=state.access;
-    h+="<div style=\"font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px\">Access</div>";
-    h+="<label class=\"ckline\"><input type=\"checkbox\" id=\"a-en\""+(a.enabled?" checked":"")+"> Require a passcode to open the app</label>";
-    h+="<div class=\"fld\"><label for=\"a-admin\">Admin passcode <span style=\"text-transform:none;letter-spacing:0\">(full access — required)</span></label><input id=\"a-admin\" type=\"text\" autocomplete=\"off\" value=\""+esc(a.codes.admin||"")+"\"></div>";
-    h+="<div class=\"fld\"><label for=\"a-sched\">Scheduler passcode <span style=\"text-transform:none;letter-spacing:0\">(edit schedule; blank = off)</span></label><input id=\"a-sched\" type=\"text\" autocomplete=\"off\" value=\""+esc(a.codes.scheduler||"")+"\"></div>";
-    h+="<div class=\"fld\"><label for=\"a-view\">View-only passcode <span style=\"text-transform:none;letter-spacing:0\">(read only; blank = off)</span></label><input id=\"a-view\" type=\"text\" autocomplete=\"off\" value=\""+esc(a.codes.view||"")+"\"></div>";
-    h+="<p class=\"hint\">Passcodes are stored in this app's saved data, not encrypted &mdash; anyone who can read the page source can read them. This keeps casual users out of editing; it is not real security.</p>";
-
-    h+="<p class=\"hint\">Schedule and rate changes are saved automatically. Use Print for a paper copy.</p>";
+    h+="<p class=\"hint\">Everything you enter is saved automatically. Use Print to hand your brother a paper copy.</p>";
     h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"g-cancel\">Cancel</button><button class=\"btn primary\" id=\"g-save\">Save</button></div>";
     var m=modal(h);
     m.querySelector("#g-cancel").addEventListener("click",close);
     m.querySelector("#g-save").addEventListener("click",function(){
-      var adm=m.querySelector("#a-admin").value.trim();
-      var en=m.querySelector("#a-en").checked;
-      if(en && !adm){ alert("Set an admin passcode, or turn off \"Require a passcode\"."); m.querySelector("#a-admin").focus(); return; }
       s.title=m.querySelector("#g-title").value.trim()||"The Lesson Book";
       s.subtitle=m.querySelector("#g-sub").value.trim();
       s.weekStartsMon = m.querySelector("#g-ws").value==="1";
@@ -951,19 +844,13 @@ button{font-family:inherit}
       if(dev<=dsv) dev=dsv+1;
       s.dayStart=dsv; s.dayEnd=dev;
       m.querySelectorAll("[data-tid]").forEach(function(inp){ teacher(inp.getAttribute("data-tid")).name = inp.value.trim(); });
-      var codes={};
-      if(adm) codes.admin=adm;
-      var sc=m.querySelector("#a-sched").value.trim(); if(sc) codes.scheduler=sc;
-      var vc=m.querySelector("#a-view").value.trim(); if(vc) codes.view=vc;
-      state.access={ enabled:en, codes:codes };
-      if(en && !validRole(session.role)) session.role="admin";
       commit(); close(); render();
     });
   }
   function hourOpts(sel,a,b){ var o=""; for(var hh=a;hh<=b;hh++){ o+="<option value=\""+hh+"\""+(hh===sel?" selected":"")+">"+fmtHour(hh)+"</option>"; } return o; }
 
   // ---- bill modal ----
-  function openBill(existing, ro){
+  function openBill(existing){
     var b = existing ? JSON.parse(JSON.stringify(existing)) : {
       id:null, date:iso(new Date()), student:"", instrument:"piano",
       clientType:"local", packageId:null, sessions:1, unitRate:rateFor("piano","local"),
@@ -973,7 +860,7 @@ button{font-family:inherit}
     state.bills.forEach(function(x){ if(x.student) names[x.student]=1; });
 
     var h="";
-    h+="<h2>"+(ro?"Bill":(existing?"Edit bill":"New bill"))+"</h2>";
+    h+="<h2>"+(existing?"Edit bill":"New bill")+"</h2>";
     h+="<div class=\"err\" id=\"berr\" hidden></div>";
     h+="<div class=\"row2\">";
     h+="<div class=\"fld\"><label for=\"b-date\">Date</label><input id=\"b-date\" type=\"date\" value=\""+esc(b.date)+"\"></div>";
@@ -1055,14 +942,6 @@ button{font-family:inherit}
     ["#b-ses","#b-rate","#b-disc","#b-paid"].forEach(function(id){ q(id).addEventListener("input",calc); });
 
     syncPkgUI(); calc();
-
-    if(ro){
-      m.classList.add("ro");
-      m.querySelectorAll("input,select,textarea,[data-ct]").forEach(function(x){ x.disabled=true; });
-      m.querySelector(".m-act").innerHTML="<span class=\"grow\"></span><button class=\"btn\" id=\"b-close\">Close</button>";
-      m.querySelector("#b-close").addEventListener("click",close);
-      return;
-    }
 
     q("#b-cancel").addEventListener("click",close);
     if(existing) q("#b-del").addEventListener("click",function(){
@@ -1171,63 +1050,6 @@ button{font-family:inherit}
       state.rates.packages=pk;
       commit(); close(); render();
     });
-  }
-
-  // ---- auth screens ----
-  function setupHTML(){
-    return "<div class=\"gate\"><div class=\"gate-card\">"
-      + "<h1>"+esc(state.settings.title||"The Lesson Book")+"</h1>"
-      + "<p class=\"gate-sub\">First-time setup. Create a passcode for each role. Admin is required; leave a role blank to disable it.</p>"
-      + "<div class=\"fld\"><label for=\"su-admin\">Admin passcode &mdash; full access</label><input id=\"su-admin\" type=\"password\" autocomplete=\"new-password\"></div>"
-      + "<div class=\"fld\"><label for=\"su-sched\">Scheduler passcode &mdash; add / edit lessons</label><input id=\"su-sched\" type=\"password\" autocomplete=\"new-password\"></div>"
-      + "<div class=\"fld\"><label for=\"su-view\">View-only passcode &mdash; read only</label><input id=\"su-view\" type=\"password\" autocomplete=\"new-password\"></div>"
-      + "<div class=\"err\" id=\"su-err\" hidden></div>"
-      + "<button class=\"btn primary\" id=\"su-go\" style=\"width:100%\">Save &amp; continue</button>"
-      + "<p class=\"gate-note\">Passcodes are saved in this app's data on this device / deployment and are not encrypted &mdash; anyone who can read the page source can read them. This is a light gate for casual use, not real security. For that, host the app behind a login backend.</p>"
-      + "</div></div>";
-  }
-  function lockHTML(){
-    return "<div class=\"gate\"><div class=\"gate-card\">"
-      + "<h1>"+esc(state.settings.title||"The Lesson Book")+"</h1>"
-      + "<p class=\"gate-sub\">Enter your passcode to continue.</p>"
-      + "<div class=\"fld\"><label for=\"lk-code\">Passcode</label><input id=\"lk-code\" type=\"password\" autocomplete=\"current-password\"></div>"
-      + "<label class=\"gate-remember\"><input type=\"checkbox\" id=\"lk-remember\"> Keep me signed in on this device</label>"
-      + "<div class=\"err\" id=\"lk-err\" hidden></div>"
-      + "<button class=\"btn primary\" id=\"lk-go\" style=\"width:100%\">Enter</button>"
-      + "</div></div>";
-  }
-  function bindGate(){
-    var go=root.querySelector("#su-go");
-    if(go){
-      var run=function(){
-        var adm=(root.querySelector("#su-admin").value||"").trim();
-        var er=root.querySelector("#su-err");
-        if(!adm){ er.textContent="An admin passcode is required."; er.hidden=false; return; }
-        var codes={admin:adm};
-        var sc=(root.querySelector("#su-sched").value||"").trim(); if(sc) codes.scheduler=sc;
-        var vc=(root.querySelector("#su-view").value||"").trim(); if(vc) codes.view=vc;
-        state.access={ enabled:true, codes:codes };
-        session.role="admin"; setStoredRole("admin",true); session.remembered=true;
-        commit(); render();
-      };
-      go.addEventListener("click",run);
-      root.querySelector("#su-view").addEventListener("keydown",function(e){ if(e.key==="Enter") run(); });
-      return;
-    }
-    var lg=root.querySelector("#lk-go");
-    if(lg){
-      var attempt=function(){
-        var code=root.querySelector("#lk-code").value||"";
-        var rem=root.querySelector("#lk-remember").checked;
-        var r=roleForCode(code.trim());
-        var er=root.querySelector("#lk-err");
-        if(!r){ er.textContent="That passcode wasn't recognised."; er.hidden=false; root.querySelector("#lk-code").select(); return; }
-        session.role=r; setStoredRole(r,rem); session.remembered=rem;
-        render();
-      };
-      lg.addEventListener("click",attempt);
-      root.querySelector("#lk-code").addEventListener("keydown",function(e){ if(e.key==="Enter") attempt(); });
-    }
   }
 
   render();
