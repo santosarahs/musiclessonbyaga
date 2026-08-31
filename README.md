@@ -5,8 +5,9 @@ teaching piano, guitar, voice, ukulele, and drums, with a different teacher per 
 
 ## Contents
 
-- [`lesson-book.html`](lesson-book.html) — the whole app in one self-contained file
-  (no build step, no dependencies). Open it in a browser.
+- [`index.html`](index.html) — the whole app in one self-contained file
+  (no build step, no dependencies). Open it in a browser, or deploy the repo as-is
+  to any static host (Vercel, GitHub Pages, Netlify) and it serves at `/`.
 
 ## What it does
 
