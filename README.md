@@ -23,6 +23,15 @@ teaching piano, guitar, voice, ukulele, and drums, with a different teacher per 
 - A transactions ledger: date, student, lesson, sessions, rate, discount, total, amount paid,
   balance, and status (unpaid / partial / paid), with Billed / Collected / Outstanding totals.
 
+**Access**
+- Passcode gate with three roles: **view only** (read), **scheduler** (edit the
+  schedule), **admin** (everything, including rates, settings, and the passcodes).
+- Set up on first run; admins manage passcodes and can turn the gate off entirely
+  under Settings → Access.
+- Note: this is a client-side gate for casual use, not real security — passcodes live
+  in the page data and are not encrypted. A login backend is needed for true access
+  control.
+
 **Other**
 - Light and dark themes, responsive layout, and a Print view for handouts and payment reports.
 - Data is saved in the browser; when hosted as a Claude Artifact it persists across sessions.
