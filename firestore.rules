@@ -30,6 +30,7 @@ service cloud.firestore {
 
     match /studio/lessons  { allow read: if canRead(); allow write: if canWrite(); }
     match /studio/billing  { allow read: if canRead(); allow write: if canWrite(); }
+    match /studio/students { allow read: if canRead(); allow write: if canWrite(); }
     match /studio/settings { allow read: if canRead(); allow write: if isAdmin(); }
 
     match /members/{id} {

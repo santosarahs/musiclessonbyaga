@@ -433,6 +433,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     },
     bills:[],
     bookings:{},
+    students:[],
     ui:{view:"week",filter:TIDS.slice(),helpDismissed:false,billFilter:"all",billMonth:""}
   };
   var LSKEY = "lesson-book-v1";
@@ -460,9 +461,11 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
   if(!Array.isArray(state.rates.packages)) state.rates.packages = JSON.parse(JSON.stringify(DEFAULT.rates.packages));
   if(!Array.isArray(state.bills)) state.bills = [];
   if(!state.bookings || typeof state.bookings!=="object" || Array.isArray(state.bookings)) state.bookings = {};
+  if(!Array.isArray(state.students)) state.students = [];
   state.ui = Object.assign({}, DEFAULT.ui, state.ui||{});
   if(!Array.isArray(state.ui.filter) || !state.ui.filter.length) state.ui.filter = TIDS.slice();
-  if(["week","month","billing"].indexOf(state.ui.view)<0) state.ui.view = "week";
+  if(["week","month","billing","students"].indexOf(state.ui.view)<0) state.ui.view = "week";
+  migrateStudentIds();
 
   var root = document.getElementById("root");
 
@@ -483,8 +486,12 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     suspendRemote = true;
     window.LessonBookFB.save("lessons", {lessons:state.lessons, bookings:state.bookings}).catch(function(){});
     window.LessonBookFB.save("billing", {bills:state.bills}).catch(function(){});
+    window.LessonBookFB.save("students", {students:state.students}).catch(function(){});
     if(isAdmin()) window.LessonBookFB.save("settings", {settings:state.settings, teachers:state.teachers, rates:state.rates}).catch(function(){});
     setTimeout(function(){ suspendRemote=false; }, 300);
+  }
+  function afterSync(){
+    if(migrateStudentIds()) commit();
   }
 
   function startSync(){
@@ -493,14 +500,19 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       if(data && Array.isArray(data.lessons)){
         state.lessons = data.lessons;
         state.bookings = (data.bookings && typeof data.bookings==="object") ? data.bookings : {};
-        render();
+        afterSync(); render();
       }
       else if(data===null && isAdmin()){ window.LessonBookFB.save("lessons",{lessons:state.lessons, bookings:state.bookings}).catch(function(){}); }
     });
     window.LessonBookFB.watch("billing", function(data){
       if(suspendRemote || overlay) return;
-      if(data && Array.isArray(data.bills)){ state.bills = data.bills; render(); }
+      if(data && Array.isArray(data.bills)){ state.bills = data.bills; afterSync(); render(); }
       else if(data===null && isAdmin()){ window.LessonBookFB.save("billing",{bills:state.bills}).catch(function(){}); }
+    });
+    window.LessonBookFB.watch("students", function(data){
+      if(suspendRemote || overlay) return;
+      if(data && Array.isArray(data.students)){ state.students = data.students; afterSync(); render(); }
+      else if(data===null && isAdmin()){ window.LessonBookFB.save("students",{students:state.students}).catch(function(){}); }
     });
     window.LessonBookFB.watch("settings", function(data){
       if(suspendRemote || overlay) return;
@@ -590,8 +602,8 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     var k=bkey(lessonId,date);
     state.bookings[k] = Object.assign({status:"booked", billId:null}, state.bookings[k], patch);
   }
-  function billsForStudent(name,excludeId){
-    return state.bills.filter(function(b){ return b.student===name && b.id!==excludeId && billCalc(b).status!=="paid"; });
+  function billsForStudent(studentId,excludeId){
+    return state.bills.filter(function(b){ return b.studentId===studentId && b.id!==excludeId && billCalc(b).status!=="paid"; });
   }
   // Only auto-advances completed-unpaid -> completed-paid when the linked bill is
   // fully paid. Never touches booked/in-progress/cancelled/rescheduled -- a
@@ -602,6 +614,28 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       var bk=state.bookings[k];
       if(bk.billId===bill.id && bk.status==="completed-unpaid") bk.status="completed-paid";
     });
+  }
+
+  // ---- students ----
+  function studentById(id){ for(var i=0;i<state.students.length;i++) if(state.students[i].id===id) return state.students[i]; return null; }
+  function ensureStudentId(name){
+    name=(name||"").trim();
+    if(!name) return null;
+    var lname=name.toLowerCase();
+    for(var i=0;i<state.students.length;i++) if(state.students[i].name.trim().toLowerCase()===lname) return state.students[i].id;
+    var rec={id:uid(), name:name, phone:"", notes:"", createdAt:Date.now()};
+    state.students.push(rec);
+    return rec.id;
+  }
+  function migrateStudentIds(){
+    var changed=false;
+    state.lessons.forEach(function(l){ if(l.student && !l.studentId){ l.studentId=ensureStudentId(l.student); changed=true; } });
+    state.bills.forEach(function(b){ if(b.student && !b.studentId){ b.studentId=ensureStudentId(b.student); changed=true; } });
+    return changed;
+  }
+  function studentDatalist(id){
+    return "<datalist id=\""+id+"\">"+state.students.slice().sort(function(a,b){ return a.name.localeCompare(b.name); })
+      .map(function(s){ return "<option value=\""+esc(s.name)+"\">"; }).join("")+"</datalist>";
   }
 
   var cursor = new Date(); cursor.setDate(1); cursor.setHours(0,0,0,0);
@@ -647,8 +681,8 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     h +=   "<div class=\"brand\"><h1>"+esc(s.title||"The Lesson Book")+"</h1><p>"+esc(s.subtitle||"")+"</p></div>";
     h +=   "<div class=\"hd-actions\">";
     if(canEdit()){
-      h +=     (view==="billing"
-                ? "<button class=\"btn primary\" data-act=\"new-bill\">+ New bill</button>"
+      h +=     (view==="billing" ? "<button class=\"btn primary\" data-act=\"new-bill\">+ New bill</button>"
+                : view==="students" ? "<button class=\"btn primary\" data-act=\"add-student\">+ Add student</button>"
                 : "<button class=\"btn primary\" data-act=\"add\">+ Add lesson</button>");
     }
     if(isAdmin()) h += "<button class=\"btn icon\" data-act=\"settings\" aria-label=\"Settings\" title=\"Teachers &amp; settings\">&#9881;</button>";
@@ -671,6 +705,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     h +=     "<button role=\"tab\" aria-selected=\""+(view==="week")+"\" data-act=\"view\" data-v=\"week\">Week</button>";
     h +=     "<button role=\"tab\" aria-selected=\""+(view==="month")+"\" data-act=\"view\" data-v=\"month\">Month</button>";
     h +=     "<button role=\"tab\" aria-selected=\""+(view==="billing")+"\" data-act=\"view\" data-v=\"billing\">Billing</button>";
+    h +=     "<button role=\"tab\" aria-selected=\""+(view==="students")+"\" data-act=\"view\" data-v=\"students\">Students</button>";
     h +=   "</div>";
 
     if(view==="month"){
@@ -697,11 +732,13 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       }
       h += "</div>";
       if(isAdmin()) h += "<div class=\"bill-actions\"><button class=\"btn\" data-act=\"reports\">Reports</button><button class=\"btn\" data-act=\"rates\">Rates &amp; packages</button></div>";
+    } else if(view==="students"){
+      h += "<div class=\"wk-cap\">"+state.students.length+" student"+(state.students.length===1?"":"s")+"</div>";
     } else {
       h += "<div class=\"wk-cap\">Standing weekly schedule</div>";
     }
 
-    if(view!=="billing"){
+    if(view==="week" || view==="month"){
       h += "<div class=\"chips\">";
       h +=   "<button class=\"chip all\" data-act=\"filter-all\" aria-pressed=\""+allOn+"\">All teachers</button>";
       state.teachers.forEach(function(t){
@@ -712,7 +749,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     }
     h += "</div>";
 
-    h += "<div id=\"view\">"+(view==="week"? weekHTML() : view==="month"? monthHTML() : billingHTML())+"</div>";
+    h += "<div id=\"view\">"+(view==="week"? weekHTML() : view==="month"? monthHTML() : view==="students"? studentsHTML() : billingHTML())+"</div>";
     h += "</div>";
     root.innerHTML = h;
     bind();
@@ -837,6 +874,31 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     return out;
   }
 
+  // ---- students view ----
+  function outstandingForStudent(id){
+    return state.bills.filter(function(b){ return b.studentId===id; }).reduce(function(sum,b){ return sum+billCalc(b).bal; },0);
+  }
+  function studentsHTML(){
+    var list=state.students.slice().sort(function(a,b){ return a.name.localeCompare(b.name); });
+    var out="<div class=\"fld\" style=\"max-width:280px;margin-bottom:14px\"><input id=\"stu-search\" type=\"text\" placeholder=\"Search students…\"></div>";
+    if(!list.length){
+      out+="<div class=\"empty\"><h3>No students yet</h3><p>They show up automatically once you add a lesson or bill, or click &ldquo;+ Add student&rdquo; to add one ahead of time.</p></div>";
+      return out;
+    }
+    out+="<div class=\"tbl-wrap\"><table class=\"tbl\"><thead><tr><th>Student</th><th class=\"num\">Bookings</th><th class=\"num\">Outstanding</th></tr></thead><tbody>";
+    list.forEach(function(s){
+      var lessonCount=state.lessons.filter(function(l){ return l.studentId===s.id; }).length;
+      var bal=outstandingForStudent(s.id);
+      out+="<tr class=\"stu-row\" data-act=\"student\" data-id=\""+s.id+"\" data-name=\""+esc(s.name.toLowerCase())+"\">";
+      out+="<td class=\"stu\">"+esc(s.name)+(s.phone?"<span class=\"badge\">"+esc(s.phone)+"</span>":"")+"</td>";
+      out+="<td class=\"num\">"+lessonCount+"</td>";
+      out+="<td class=\"num\">"+(bal>0?money(bal):"&mdash;")+"</td>";
+      out+="</tr>";
+    });
+    out+="</tbody></table></div>";
+    return out;
+  }
+
   // ---- events ----
   function bind(){
     root.querySelectorAll("[data-act]").forEach(function(el){
@@ -844,6 +906,13 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     });
     var bm=root.querySelector("#bmonth");
     if(bm) bm.addEventListener("change", function(){ state.ui.billMonth=bm.value; commit(); render(); });
+    var stq=root.querySelector("#stu-search");
+    if(stq) stq.addEventListener("input", function(){
+      var q=stq.value.trim().toLowerCase();
+      root.querySelectorAll(".stu-row").forEach(function(row){
+        row.hidden = q && row.getAttribute("data-name").indexOf(q)<0;
+      });
+    });
     root.querySelectorAll(".daycol").forEach(function(col){
       col.addEventListener("click", function(e){
         if(!canEdit()) return;
@@ -893,6 +962,8 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     else if(act==="bfilter"){ state.ui.billFilter=el.getAttribute("data-f"); commit(); render(); }
     else if(act==="rates"){ if(isAdmin()) openRates(); }
     else if(act==="reports"){ if(isAdmin()) openReports(); }
+    else if(act==="add-student"){ if(canEdit()) openStudentForm(null); }
+    else if(act==="student"){ openStudentDetail(el.getAttribute("data-id")); }
   }
 
   function find(id){ for(var i=0;i<state.lessons.length;i++) if(state.lessons[i].id===id) return state.lessons[i]; return null; }
@@ -948,7 +1019,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     h+="<div class=\"fld\"><label for=\"f-t\">Instrument / teacher</label><select id=\"f-t\">";
     state.teachers.forEach(function(t){ h+="<option value=\""+t.id+"\""+(t.id===l.teacher?" selected":"")+">"+esc(tlabel(t.id))+"</option>"; });
     h+="</select></div>";
-    h+="<div class=\"fld\"><label for=\"f-s\">Student name</label><input id=\"f-s\" type=\"text\" value=\""+esc(l.student)+"\" placeholder=\"e.g. Mia Reyes\" autocomplete=\"off\"></div>";
+    h+="<div class=\"fld\"><label for=\"f-s\">Student name</label><input id=\"f-s\" type=\"text\" list=\"f-names\" value=\""+esc(l.student)+"\" placeholder=\"e.g. Mia Reyes\" autocomplete=\"off\"></div>"+studentDatalist("f-names");
     h+="<div class=\"fld\"><label>Repeats</label><div class=\"rep\">";
     h+="<button type=\"button\" data-rep=\"weekly\" aria-pressed=\""+(l.recurrence==="weekly")+"\">Every week</button>";
     h+="<button type=\"button\" data-rep=\"once\" aria-pressed=\""+(l.recurrence==="once")+"\">One time</button>";
@@ -993,7 +1064,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       var err=m.querySelector("#lerr");
       if(!student){ err.textContent="Please enter the student's name."; err.hidden=false; m.querySelector("#f-s").focus(); return; }
       if(!start){ err.textContent="Please choose a start time."; err.hidden=false; return; }
-      var rowset={ teacher:teacher, student:student, recurrence:rec, start:start, mins:mins, notes:notes };
+      var rowset={ teacher:teacher, student:student, studentId:ensureStudentId(student), recurrence:rec, start:start, mins:mins, notes:notes };
       if(rec==="weekly"){ rowset.dow=+m.querySelector("#f-d").value; }
       else {
         var dv=m.querySelector("#f-date").value;
@@ -1063,7 +1134,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       h += "<div class=\"bmini\"><div class=\"r\"><span>Total</span><span>"+money(c.tot)+"</span></div><div class=\"r\"><span>Paid</span><span>"+money(c.paid)+"</span></div><div class=\"r\"><span>Balance</span><span>"+money(c.bal)+"</span></div><div class=\"r\"><span>Status</span><span class=\"pill-s "+c.status+"\">"+c.status+"</span></div>";
       h += "<div class=\"acts\"><button class=\"mini\" id=\"bk-managebill\" type=\"button\">Manage bill</button><button class=\"mini\" id=\"bk-invoice\" type=\"button\">"+(c.bal<=0?"Receipt":"Invoice")+"</button><button class=\"mini\" id=\"bk-unlink\" type=\"button\">Unlink</button></div></div>";
     } else {
-      var others=billsForStudent(l.student);
+      var others=billsForStudent(l.studentId);
       h += "<div class=\"bmini\"><p class=\"hint\" style=\"margin:0 0 8px\">No bill linked yet.</p><div class=\"acts\"><button class=\"btn\" id=\"bk-newbill\" type=\"button\">+ Create bill</button>"+(others.length?"<button class=\"btn\" id=\"bk-linkbill\" type=\"button\">Link existing bill</button>":"")+"</div><div id=\"bk-linklist\" class=\"linklist\" hidden></div></div>";
     }
     h += "</div>";
@@ -1100,7 +1171,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     if(rc) rc.addEventListener("click",function(){
       var nd=m.querySelector("#rs-date").value, ns=m.querySelector("#rs-start").value;
       if(!nd || !ns) return;
-      var newLesson={ id:uid(), teacher:l.teacher, student:l.student, recurrence:"once", date:nd, start:ns, mins:l.mins||60, notes:l.notes||"", rescheduledFrom:bkey(l.id,dateIso) };
+      var newLesson={ id:uid(), teacher:l.teacher, student:l.student, studentId:l.studentId, recurrence:"once", date:nd, start:ns, mins:l.mins||60, notes:l.notes||"", rescheduledFrom:bkey(l.id,dateIso) };
       state.lessons.push(newLesson);
       setBooking(l.id,dateIso,{status:"rescheduled", rescheduledTo:bkey(newLesson.id,nd)});
       commit(); close();
@@ -1120,7 +1191,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       var lb=m.querySelector("#bk-linkbill");
       if(lb) lb.addEventListener("click",function(){
         var list=m.querySelector("#bk-linklist");
-        list.innerHTML = billsForStudent(l.student).map(function(b){
+        list.innerHTML = billsForStudent(l.studentId).map(function(b){
           var cb=billCalc(b);
           return "<button type=\"button\" data-bid=\""+b.id+"\">"+esc(b.date||"")+" &middot; "+esc(teacher(b.instrument).label)+" &middot; "+money(cb.tot)+" ("+cb.status+")</button>";
         }).join("");
@@ -1264,17 +1335,13 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       clientType:pfType, packageId:null, sessions:1, unitRate:rateFor(pfInst,pfType),
       discount:0, paidAmount:0, notes:""
     };
-    var names={}; state.lessons.forEach(function(l){ if(l.student) names[l.student]=1; });
-    state.bills.forEach(function(x){ if(x.student) names[x.student]=1; });
-
     var h="";
     h+="<h2>"+(existing?"Edit bill":"New bill")+"</h2>";
     h+="<div class=\"err\" id=\"berr\" hidden></div>";
     h+="<div class=\"row2\">";
     h+="<div class=\"fld\"><label for=\"b-date\">Date</label><input id=\"b-date\" type=\"date\" value=\""+esc(b.date)+"\"></div>";
     h+="<div class=\"fld\"><label for=\"b-stu\">Student</label><input id=\"b-stu\" type=\"text\" list=\"b-names\" autocomplete=\"off\" value=\""+esc(b.student)+"\" placeholder=\"Student name\"></div>";
-    h+="</div>";
-    h+="<datalist id=\"b-names\">"+Object.keys(names).map(function(n){ return "<option value=\""+esc(n)+"\">"; }).join("")+"</datalist>";
+    h+="</div>"+studentDatalist("b-names");
     h+="<div class=\"row2\">";
     h+="<div class=\"fld\"><label for=\"b-inst\">Instrument</label><select id=\"b-inst\">"+instOpts(b.instrument)+"</select></div>";
     h+="<div class=\"fld\"><label>Client</label><div class=\"rep\">";
@@ -1369,6 +1436,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       var rec={
         date:q("#b-date").value||iso(new Date()),
         student:student,
+        studentId:ensureStudentId(student),
         instrument:q("#b-inst").value,
         clientType:ct,
         packageId:(pkgOn && pk)?pk.id:null,
@@ -1469,6 +1537,121 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     var m=modal(h);
     m.querySelector("#rep-close").addEventListener("click",close);
     m.querySelector("#rep-print").addEventListener("click",printDoc);
+  }
+
+  // ---- student detail / add ----
+  function openStudentForm(existing){
+    var s = existing ? JSON.parse(JSON.stringify(existing)) : {id:null,name:"",phone:"",notes:""};
+    var h="<h2>"+(existing?"Edit student":"Add student")+"</h2>";
+    h+="<div class=\"err\" id=\"sferr\" hidden></div>";
+    h+="<div class=\"fld\"><label for=\"sf-name\">Name</label><input id=\"sf-name\" type=\"text\" value=\""+esc(s.name)+"\" placeholder=\"e.g. Mia Reyes\"></div>";
+    h+="<div class=\"fld\"><label for=\"sf-phone\">Phone <span style=\"text-transform:none;letter-spacing:0\">(optional)</span></label><input id=\"sf-phone\" type=\"text\" value=\""+esc(s.phone)+"\"></div>";
+    h+="<div class=\"fld\"><label for=\"sf-notes\">Notes <span style=\"text-transform:none;letter-spacing:0\">(optional)</span></label><textarea id=\"sf-notes\">"+esc(s.notes)+"</textarea></div>";
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"sf-cancel\">Cancel</button><button class=\"btn primary\" id=\"sf-save\">"+(existing?"Save":"Add student")+"</button></div>";
+    var m=modal(h);
+    m.querySelector("#sf-cancel").addEventListener("click",close);
+    m.querySelector("#sf-save").addEventListener("click",function(){
+      var nm=m.querySelector("#sf-name").value.trim();
+      var err=m.querySelector("#sferr");
+      if(!nm){ err.textContent="Please enter a name."; err.hidden=false; return; }
+      var id=ensureStudentId(nm);
+      var rec=studentById(id);
+      rec.phone=m.querySelector("#sf-phone").value.trim();
+      rec.notes=m.querySelector("#sf-notes").value.trim();
+      commit(); close(); render();
+    });
+  }
+
+  function openStudentDetail(id){
+    var s=studentById(id);
+    if(!s) return;
+    var lessons=state.lessons.filter(function(l){ return l.studentId===id; });
+    var bills=state.bills.slice().filter(function(b){ return b.studentId===id; }).sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
+    var activity=Object.keys(state.bookings).map(function(k){
+      var bk=state.bookings[k], parts=k.split("|"), lesson=find(parts[0]);
+      if(!lesson || lesson.studentId!==id) return null;
+      return {date:parts[1], lesson:lesson, booking:bk};
+    }).filter(Boolean).sort(function(a,b){ return b.date.localeCompare(a.date); });
+
+    var billed=0, collected=0;
+    bills.forEach(function(b){ var c=billCalc(b); billed+=c.tot; collected+=Math.min(c.paid,c.tot); });
+
+    var h="<h2>"+esc(s.name)+"</h2>";
+    if(canEdit()){
+      h+="<div class=\"row2\"><div class=\"fld\"><label for=\"sd-name\">Name</label><input id=\"sd-name\" type=\"text\" value=\""+esc(s.name)+"\"></div><div class=\"fld\"><label for=\"sd-phone\">Phone</label><input id=\"sd-phone\" type=\"text\" value=\""+esc(s.phone||"")+"\"></div></div>";
+      h+="<div class=\"fld\"><label for=\"sd-notes\">Notes</label><textarea id=\"sd-notes\">"+esc(s.notes||"")+"</textarea></div>";
+    } else {
+      if(s.phone) h+="<div class=\"fld\"><label>Phone</label><div>"+esc(s.phone)+"</div></div>";
+      if(s.notes) h+="<div class=\"fld\"><label>Notes</label><div>"+esc(s.notes)+"</div></div>";
+    }
+
+    h+="<div class=\"stats\"><div class=\"stat\"><div class=\"k\">Billed</div><div class=\"v\">"+money(billed)+"</div></div><div class=\"stat coll\"><div class=\"k\">Collected</div><div class=\"v\">"+money(collected)+"</div></div><div class=\"stat out\"><div class=\"k\">Outstanding</div><div class=\"v\">"+money(billed-collected)+"</div></div></div>";
+
+    h+="<div class=\"rephead\">Lessons</div>";
+    if(lessons.length){
+      h+="<div class=\"daylist\">";
+      lessons.forEach(function(l){
+        h+="<button data-act=\"sd-lesson\" data-id=\""+l.id+"\"><span class=\"swatch\" style=\"background:var(--"+l.teacher+")\"></span>"+esc(tlabel(l.teacher))+" &middot; "+(l.recurrence==="weekly"?"Every "+DOWL[l.dow]:new Date(l.date+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}))+" "+fmt12(l.start)+"<span class=\"tag\">"+(l.recurrence==="weekly"?"weekly":"one-time")+"</span></button>";
+      });
+      h+="</div>";
+    } else h+="<p class=\"hint\" style=\"margin-top:0\">No lessons on the books.</p>";
+
+    if(activity.length){
+      h+="<div class=\"rephead\">Recent activity</div><div class=\"daylist\">";
+      activity.slice(0,10).forEach(function(a){
+        var st=STATUSES[a.booking.status]||STATUSES.booked;
+        h+="<button data-act=\"sd-booking\" data-id=\""+a.lesson.id+"\" data-date=\""+a.date+"\"><span class=\"pt\">"+esc(a.date)+"</span> "+esc(tlabel(a.lesson.teacher))+(st.dot?" <span class=\"sdot\" style=\"--sc:"+st.dot+"\"></span>":"")+" "+esc(st.label)+"</button>";
+      });
+      h+="</div>";
+    }
+
+    h+="<div class=\"rephead\">Billing</div>";
+    if(bills.length){
+      h+="<div class=\"tbl-wrap\"><table class=\"reptbl\"><thead><tr><th>Date</th><th>Instrument</th><th class=\"num\">Total</th><th class=\"num\">Balance</th><th>Status</th></tr></thead><tbody>";
+      bills.forEach(function(b){
+        var c=billCalc(b);
+        h+="<tr data-act=\"sd-bill\" data-id=\""+b.id+"\" style=\"cursor:pointer\"><td>"+esc(b.date||"")+"</td><td>"+esc(teacher(b.instrument).label)+"</td><td class=\"num\">"+money(c.tot)+"</td><td class=\"num\">"+money(c.bal)+"</td><td><span class=\"pill-s "+c.status+"\">"+c.status+"</span></td></tr>";
+      });
+      h+="</tbody></table></div>";
+    } else h+="<p class=\"hint\" style=\"margin-top:0\">No bills yet.</p>";
+
+    h+="<div class=\"m-act\">";
+    if(canEdit()) h+="<button class=\"btn danger\" id=\"sd-del\" type=\"button\">Delete</button><button class=\"btn\" id=\"sd-newbill\" type=\"button\">+ New bill</button>";
+    h+="<span class=\"grow\"></span><button class=\"btn\" id=\"sd-close\">Close</button>";
+    if(canEdit()) h+="<button class=\"btn primary\" id=\"sd-save\">Save</button>";
+    h+="</div>";
+
+    var m=modal(h);
+    m.querySelector("#sd-close").addEventListener("click",close);
+    m.querySelectorAll("[data-act='sd-lesson']").forEach(function(btn){
+      btn.addEventListener("click",function(){ var l=find(btn.getAttribute("data-id")); close(); if(l) openLesson(l,null); });
+    });
+    m.querySelectorAll("[data-act='sd-booking']").forEach(function(btn){
+      btn.addEventListener("click",function(){ var l=find(btn.getAttribute("data-id")), d=btn.getAttribute("data-date"); close(); if(l) openBooking(l,d); });
+    });
+    m.querySelectorAll("[data-act='sd-bill']").forEach(function(btn){
+      btn.addEventListener("click",function(){ var b=findBill(btn.getAttribute("data-id")); close(); if(b) openBill(b); });
+    });
+    if(canEdit()){
+      m.querySelector("#sd-newbill").addEventListener("click",function(){ close(); openBill(null, {student:s.name, studentId:s.id, date:iso(new Date())}); });
+      m.querySelector("#sd-save").addEventListener("click",function(){
+        var nm=m.querySelector("#sd-name").value.trim();
+        if(!nm) return;
+        s.name=nm;
+        s.phone=m.querySelector("#sd-phone").value.trim();
+        s.notes=m.querySelector("#sd-notes").value.trim();
+        commit(); close(); render();
+      });
+      m.querySelector("#sd-del").addEventListener("click",function(){
+        var btn=this;
+        var used = state.lessons.some(function(l){ return l.studentId===s.id; }) || state.bills.some(function(b){ return b.studentId===s.id; });
+        if(used){ alert("Can't delete "+s.name+" -- they still have lessons or bills on record."); return; }
+        if(btn.getAttribute("data-armed")){
+          state.students=state.students.filter(function(x){ return x.id!==s.id; });
+          commit(); close(); render();
+        } else { btn.setAttribute("data-armed","1"); btn.textContent="Click again to delete"; }
+      });
+    }
   }
 
   // ---- rates & packages modal ----
