@@ -285,7 +285,7 @@ button{font-family:inherit}
 <script type="module" id="firebase-init">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---- Paste your Firebase project's web config here (Project settings -> Your apps). ----
 // This is a public client identifier, not a secret -- safe to commit.
@@ -307,7 +307,10 @@ const BOOTSTRAP_ROLES = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+// Ad blockers / privacy extensions / some corporate networks block Firestore's
+// streaming "webchannel" connection (shows up as ERR_BLOCKED_BY_CLIENT). Long
+// polling avoids that at the cost of a little latency.
+const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true, useFetchStreams: false });
 const provider = new GoogleAuthProvider();
 
 async function roleFor(user){
@@ -326,19 +329,36 @@ window.LessonBookFB = {
   onAuth: function(cb){ return onAuthStateChanged(auth, cb); },
   roleFor: roleFor,
   watch: function(name, cb){
-    return onSnapshot(doc(db,"studio",name), function(snap){ cb(snap.exists() ? snap.data() : null); }, function(){});
+    return onSnapshot(doc(db,"studio",name), function(snap){ cb(snap.exists() ? snap.data() : null); }, function(err){
+      console.error("LessonBook: watch("+name+") failed:", err.code, err.message);
+    });
   },
-  save: function(name, data){ return setDoc(doc(db,"studio",name), data); },
+  save: function(name, data){
+    return setDoc(doc(db,"studio",name), data).catch(function(err){
+      console.error("LessonBook: save("+name+") failed:", err.code, err.message);
+      throw err;
+    });
+  },
   listMembers: async function(){
     var out = Object.keys(BOOTSTRAP_ROLES).map(function(email){ return {email:email, role:BOOTSTRAP_ROLES[email], bootstrap:true}; });
     try{
       var snap = await getDocs(collection(db,"members"));
       snap.forEach(function(d){ if(d.data().role) out.push({email:d.id, role:d.data().role, bootstrap:false}); });
-    }catch(e){}
+    }catch(e){ console.error("LessonBook: listMembers failed:", e.code, e.message); }
     return out;
   },
-  setMember: function(email, role){ return setDoc(doc(db,"members",email.toLowerCase()), {role:role}); },
-  removeMember: function(email){ return setDoc(doc(db,"members",email.toLowerCase()), {role:null}); }
+  setMember: function(email, role){
+    return setDoc(doc(db,"members",email.toLowerCase()), {role:role}).catch(function(err){
+      console.error("LessonBook: setMember failed:", err.code, err.message);
+      throw err;
+    });
+  },
+  removeMember: function(email){
+    return setDoc(doc(db,"members",email.toLowerCase()), {role:null}).catch(function(err){
+      console.error("LessonBook: removeMember failed:", err.code, err.message);
+      throw err;
+    });
+  }
 };
 window.dispatchEvent(new Event("lessonbook-fb-ready"));
 </script>
@@ -975,17 +995,30 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
           }).join("") || "<span class=\"hint\">No one else yet.</span>";
           mlist.querySelectorAll("[data-rm]").forEach(function(btn){
             btn.addEventListener("click",function(){
-              window.LessonBookFB.removeMember(btn.getAttribute("data-rm")).then(refresh);
+              btn.disabled=true; btn.textContent="Removing…";
+              window.LessonBookFB.removeMember(btn.getAttribute("data-rm")).then(refresh).catch(function(err){
+                alert("Couldn't remove access: "+(err&&err.message||err));
+                refresh();
+              });
             });
           });
-        }).catch(function(){ mlist.textContent="Couldn't load."; });
+        }).catch(function(err){ mlist.textContent="Couldn't load: "+(err&&err.message||err); });
       }
       refresh();
       m.querySelector("#mem-add").addEventListener("click",function(){
         var em=m.querySelector("#mem-email").value.trim();
         var rl=m.querySelector("#mem-role").value;
         if(!em) return;
-        window.LessonBookFB.setMember(em, rl).then(function(){ m.querySelector("#mem-email").value=""; refresh(); });
+        var btn=m.querySelector("#mem-add");
+        btn.disabled=true; var was=btn.textContent; btn.textContent="Saving…";
+        window.LessonBookFB.setMember(em, rl).then(function(){
+          m.querySelector("#mem-email").value="";
+          btn.disabled=false; btn.textContent=was;
+          refresh();
+        }).catch(function(err){
+          btn.disabled=false; btn.textContent=was;
+          alert("Couldn't save access for "+em+":\n"+(err&&err.message||err)+"\n\nIf this keeps happening, an ad blocker or privacy extension may be blocking the connection to Firestore -- try again with it paused for this site.");
+        });
       });
     })();
   }
