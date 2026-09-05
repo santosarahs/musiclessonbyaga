@@ -400,6 +400,8 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
   if(!Array.isArray(state.ui.filter) || !state.ui.filter.length) state.ui.filter = TIDS.slice();
   if(["week","month","billing"].indexOf(state.ui.view)<0) state.ui.view = "week";
 
+  var root = document.getElementById("root");
+
   // ---- auth & persistence ----
   var authState = { user:null, role:null };
   function canEdit(){ return authState.role==="admin" || authState.role==="scheduler"; }
@@ -533,8 +535,6 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
   }
 
   // ---- rendering ----
-  var root = document.getElementById("root");
-
   function render(){
     var s=state.settings;
     var view=state.ui.view;
