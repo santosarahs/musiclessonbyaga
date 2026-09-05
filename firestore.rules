@@ -32,7 +32,13 @@ service cloud.firestore {
     match /studio/billing  { allow read: if canRead(); allow write: if canWrite(); }
     match /studio/settings { allow read: if canRead(); allow write: if isAdmin(); }
 
-    match /members/{id} { allow read, write: if isAdmin(); }
+    match /members/{id} {
+      // Admins can read/list everyone; anyone signed in can read their OWN
+      // membership doc (needed to discover their own role after being added).
+      allow get:   if isAdmin() || (request.auth != null && emailLower() == id);
+      allow list:  if isAdmin();
+      allow write: if isAdmin();
+    }
 
     match /{document=**} { allow read, write: if false; }
   }
