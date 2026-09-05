@@ -7,3 +7,7 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Build
+node_modules/
+dist/
