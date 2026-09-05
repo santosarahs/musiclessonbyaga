@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function emailLower() {
+      return request.auth != null ? request.auth.token.email.lower() : '';
+    }
+
+    // Keep this in sync with BOOTSTRAP_ROLES in index.html. These two always
+    // have access, even before any "members" document exists.
+    function bootstrapRole() {
+      return emailLower() == 'santosarahsantiago@gmail.com' ? 'admin'
+           : emailLower() == 'manilynsantiagosantos@gmail.com' ? 'scheduler'
+           : null;
+    }
+
+    function memberRole() {
+      return exists(/databases/$(database)/documents/members/$(emailLower()))
+        ? get(/databases/$(database)/documents/members/$(emailLower())).data.role
+        : null;
+    }
+
+    function role() {
+      return bootstrapRole() != null ? bootstrapRole() : memberRole();
+    }
+
+    function isAdmin()  { return role() == 'admin'; }
+    function canWrite()  { return role() == 'admin' || role() == 'scheduler'; }
+    function canRead()   { return role() != null; }
+
+    match /studio/lessons  { allow read: if canRead(); allow write: if canWrite(); }
+    match /studio/billing  { allow read: if canRead(); allow write: if canWrite(); }
+    match /studio/settings { allow read: if canRead(); allow write: if isAdmin(); }
+
+    match /members/{id} { allow read, write: if isAdmin(); }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}

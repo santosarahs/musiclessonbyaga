@@ -282,6 +282,66 @@ button{font-family:inherit}
 }
 </script>
 <div id="root"></div>
+<script type="module" id="firebase-init">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ---- Paste your Firebase project's web config here (Project settings -> Your apps). ----
+// This is a public client identifier, not a secret -- safe to commit.
+const firebaseConfig = {
+  apiKey: "AIzaSyBeTflw0KyxDL_GLUOPJsZznO2_omFijcA",
+  authDomain: "musiclessonbyaga.firebaseapp.com",
+  projectId: "musiclessonbyaga",
+  storageBucket: "musiclessonbyaga.firebasestorage.app",
+  messagingSenderId: "502662860963",
+  appId: "1:502662860963:web:9ca2f846539ab7a3aeef16"
+};
+
+// Kept in sync with firestore.rules -- these two always get in even before
+// anyone has added a "members" document.
+const BOOTSTRAP_ROLES = {
+  "santosarahsantiago@gmail.com": "admin",
+  "manilynsantiagosantos@gmail.com": "scheduler"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+async function roleFor(user){
+  if(!user || !user.email) return null;
+  var email = user.email.toLowerCase();
+  if(BOOTSTRAP_ROLES[email]) return BOOTSTRAP_ROLES[email];
+  try{
+    var snap = await getDoc(doc(db,"members",email));
+    return snap.exists() ? (snap.data().role || null) : null;
+  }catch(e){ return null; }
+}
+
+window.LessonBookFB = {
+  signIn: function(){ return signInWithPopup(auth, provider); },
+  signOut: function(){ return signOut(auth); },
+  onAuth: function(cb){ return onAuthStateChanged(auth, cb); },
+  roleFor: roleFor,
+  watch: function(name, cb){
+    return onSnapshot(doc(db,"studio",name), function(snap){ cb(snap.exists() ? snap.data() : null); }, function(){});
+  },
+  save: function(name, data){ return setDoc(doc(db,"studio",name), data); },
+  listMembers: async function(){
+    var out = Object.keys(BOOTSTRAP_ROLES).map(function(email){ return {email:email, role:BOOTSTRAP_ROLES[email], bootstrap:true}; });
+    try{
+      var snap = await getDocs(collection(db,"members"));
+      snap.forEach(function(d){ if(d.data().role) out.push({email:d.id, role:d.data().role, bootstrap:false}); });
+    }catch(e){}
+    return out;
+  },
+  setMember: function(email, role){ return setDoc(doc(db,"members",email.toLowerCase()), {role:role}); },
+  removeMember: function(email){ return setDoc(doc(db,"members",email.toLowerCase()), {role:null}); }
+};
+window.dispatchEvent(new Event("lessonbook-fb-ready"));
+</script>
 <script id="main">
 (function(){
   "use strict";
@@ -340,46 +400,85 @@ button{font-family:inherit}
   if(!Array.isArray(state.ui.filter) || !state.ui.filter.length) state.ui.filter = TIDS.slice();
   if(["week","month","billing"].indexOf(state.ui.view)<0) state.ui.view = "week";
 
-  // ---- persistence ----
-  var cap = null, capReady = false;
-  if(window.claude && typeof window.claude.use === "function"){
-    window.claude.use("artifact").then(function(a){ cap = a; capReady = true; }).catch(function(){ capReady = true; });
-  }
+  // ---- auth & persistence ----
+  var authState = { user:null, role:null };
+  function canEdit(){ return authState.role==="admin" || authState.role==="scheduler"; }
+  function isAdmin(){ return authState.role==="admin"; }
+
   var saveT = null;
+  var suspendRemote = false;
   function commit(){
     try{ localStorage.setItem(LSKEY, JSON.stringify(state)); }catch(e){}
     if(saveT) clearTimeout(saveT);
-    saveT = setTimeout(function(){
-      if(cap && typeof cap.publish === "function"){
-        try{ cap.publish(buildDoc(state)).catch(function(){}); }catch(e){}
+    saveT = setTimeout(pushRemote, 500);
+  }
+  function pushRemote(){
+    if(!window.LessonBookFB || !canEdit()) return;
+    suspendRemote = true;
+    window.LessonBookFB.save("lessons", {lessons:state.lessons}).catch(function(){});
+    window.LessonBookFB.save("billing", {bills:state.bills}).catch(function(){});
+    if(isAdmin()) window.LessonBookFB.save("settings", {settings:state.settings, teachers:state.teachers, rates:state.rates}).catch(function(){});
+    setTimeout(function(){ suspendRemote=false; }, 300);
+  }
+
+  function startSync(){
+    window.LessonBookFB.watch("lessons", function(data){
+      if(suspendRemote || overlay) return;
+      if(data && Array.isArray(data.lessons)){ state.lessons = data.lessons; render(); }
+      else if(data===null && isAdmin()){ window.LessonBookFB.save("lessons",{lessons:state.lessons}).catch(function(){}); }
+    });
+    window.LessonBookFB.watch("billing", function(data){
+      if(suspendRemote || overlay) return;
+      if(data && Array.isArray(data.bills)){ state.bills = data.bills; render(); }
+      else if(data===null && isAdmin()){ window.LessonBookFB.save("billing",{bills:state.bills}).catch(function(){}); }
+    });
+    window.LessonBookFB.watch("settings", function(data){
+      if(suspendRemote || overlay) return;
+      if(data){
+        if(data.settings) state.settings = Object.assign({}, DEFAULT.settings, data.settings);
+        if(Array.isArray(data.teachers) && data.teachers.length===5) state.teachers = data.teachers;
+        if(data.rates) state.rates = data.rates;
+        render();
+      } else if(data===null && isAdmin()){
+        window.LessonBookFB.save("settings",{settings:state.settings, teachers:state.teachers, rates:state.rates}).catch(function(){});
       }
-    }, 500);
+    });
   }
-  function buildDoc(st){
-    var css = document.getElementById("sheet").textContent;
-    var js  = document.getElementById("main").textContent;
-    var fonts = document.getElementById("fonts").getAttribute("href");
-    var data = JSON.stringify(st).replace(/</g,"\\u003c");
-    return [
-      "<!doctype html>",
-      "<html lang=\"en\">",
-      "<head>",
-      "<meta charset=\"utf-8\">",
-      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
-      "<meta name=\"color-scheme\" content=\"light dark\">",
-      "<title>The Lesson Book</title>",
-      "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>",
-      "<link id=\"fonts\" rel=\"stylesheet\" href=\""+fonts+"\">",
-      "<style id=\"sheet\">"+css+"</style>",
-      "</head>",
-      "<body>",
-      "<script id=\"app-state\" type=\"application/json\">"+data+"<\/script>",
-      "<div id=\"root\"></div>",
-      "<script id=\"main\">"+js+"<\/script>",
-      "</body>",
-      "</html>"
-    ].join("\n");
+
+  function showLoading(){
+    root.innerHTML = "<div class=\"wrap\" style=\"max-width:420px;text-align:center;padding-top:18vh;color:var(--muted)\">Connecting&hellip;</div>";
   }
+  function showSignedOut(){
+    root.innerHTML = "<div class=\"wrap\" style=\"max-width:380px;text-align:center;padding-top:16vh\">"
+      + "<h1 style=\"font-family:var(--f-disp);font-size:22px;margin-bottom:6px\">The Lesson Book</h1>"
+      + "<p style=\"color:var(--muted);margin-bottom:18px\">Sign in with your studio Google account to view the schedule.</p>"
+      + "<button class=\"btn primary\" id=\"signin-btn\">Sign in with Google</button>"
+      + "</div>";
+    document.getElementById("signin-btn").addEventListener("click", function(){
+      window.LessonBookFB.signIn().catch(function(e){ alert("Sign-in failed: "+e.message); });
+    });
+  }
+  function showUnauthorized(email){
+    root.innerHTML = "<div class=\"wrap\" style=\"max-width:380px;text-align:center;padding-top:16vh\">"
+      + "<h1 style=\"font-family:var(--f-disp);font-size:22px;margin-bottom:6px\">Access needed</h1>"
+      + "<p style=\"color:var(--muted);margin-bottom:18px\">Signed in as <b>"+esc(email)+"</b>, but this account isn't on the studio's access list. Ask the admin to add it under Settings &rsaquo; Manage access.</p>"
+      + "<button class=\"btn\" id=\"signout-btn\">Sign out</button>"
+      + "</div>";
+    document.getElementById("signout-btn").addEventListener("click", function(){ window.LessonBookFB.signOut(); });
+  }
+  showLoading();
+  window.addEventListener("lessonbook-fb-ready", function(){
+    window.LessonBookFB.onAuth(function(user){
+      authState.user = user;
+      if(!user){ authState.role=null; showSignedOut(); return; }
+      window.LessonBookFB.roleFor(user).then(function(role){
+        authState.role = role;
+        if(!role){ showUnauthorized(user.email); return; }
+        startSync();
+        render();
+      });
+    });
+  });
 
   // ---- helpers over state ----
   function teacher(id){ for(var i=0;i<state.teachers.length;i++) if(state.teachers[i].id===id) return state.teachers[i]; return {id:id,label:id,name:""}; }
@@ -448,11 +547,14 @@ button{font-family:inherit}
     h += "<header class=\"hd\">";
     h +=   "<div class=\"brand\"><h1>"+esc(s.title||"The Lesson Book")+"</h1><p>"+esc(s.subtitle||"")+"</p></div>";
     h +=   "<div class=\"hd-actions\">";
-    h +=     (view==="billing"
-              ? "<button class=\"btn primary\" data-act=\"new-bill\">+ New bill</button>"
-              : "<button class=\"btn primary\" data-act=\"add\">+ Add lesson</button>");
-    h +=     "<button class=\"btn icon\" data-act=\"settings\" aria-label=\"Settings\" title=\"Teachers &amp; settings\">&#9881;</button>";
+    if(canEdit()){
+      h +=     (view==="billing"
+                ? "<button class=\"btn primary\" data-act=\"new-bill\">+ New bill</button>"
+                : "<button class=\"btn primary\" data-act=\"add\">+ Add lesson</button>");
+    }
+    if(isAdmin()) h += "<button class=\"btn icon\" data-act=\"settings\" aria-label=\"Settings\" title=\"Teachers &amp; settings\">&#9881;</button>";
     h +=     "<button class=\"btn icon\" data-act=\"print\" aria-label=\"Print\" title=\"Print\">&#9113;</button>";
+    h +=     "<button class=\"btn ghost\" data-act=\"signout\" title=\""+esc((authState.user&&authState.user.email)||"")+" ("+esc(authState.role||"")+")\">Sign out</button>";
     h +=   "</div>";
     h += "</header>";
 
@@ -495,7 +597,7 @@ button{font-family:inherit}
         h += "</select>";
       }
       h += "</div>";
-      h += "<div class=\"bill-actions\"><button class=\"btn\" data-act=\"rates\">Rates &amp; packages</button></div>";
+      if(isAdmin()) h += "<div class=\"bill-actions\"><button class=\"btn\" data-act=\"rates\">Rates &amp; packages</button></div>";
     } else {
       h += "<div class=\"wk-cap\">Standing weekly schedule</div>";
     }
@@ -627,7 +729,7 @@ button{font-family:inherit}
       out+="<td class=\"num\">"+money(Math.min(c.paid,c.tot))+"</td>";
       out+="<td class=\"num\">"+money(c.bal)+"</td>";
       out+="<td><span class=\"pill-s "+c.status+"\">"+c.status+"</span></td>";
-      out+="<td>"+(c.status!=="paid"?"<button class=\"mini\" data-act=\"mark-paid\" data-id=\""+b.id+"\">Mark paid</button>":"")+"</td>";
+      out+="<td>"+(c.status!=="paid" && canEdit() ?"<button class=\"mini\" data-act=\"mark-paid\" data-id=\""+b.id+"\">Mark paid</button>":"")+"</td>";
       out+="</tr>";
     });
     out+="</tbody></table></div>";
@@ -644,6 +746,7 @@ button{font-family:inherit}
     if(bm) bm.addEventListener("change", function(){ state.ui.billMonth=bm.value; commit(); render(); });
     root.querySelectorAll(".daycol").forEach(function(col){
       col.addEventListener("click", function(e){
+        if(!canEdit()) return;
         if(e.target.closest(".ev")) return;
         var rect=col.getBoundingClientRect();
         var y=e.clientY-rect.top;
@@ -658,8 +761,8 @@ button{font-family:inherit}
   function onAct(e){
     var el=e.currentTarget, act=el.getAttribute("data-act");
     if(act!=="day") e.stopPropagation();
-    if(act==="add"){ openLesson(null,null); }
-    else if(act==="edit"){ var l=find(el.getAttribute("data-id")); if(l) openLesson(l,null); }
+    if(act==="add"){ if(canEdit()) openLesson(null,null); }
+    else if(act==="edit"){ if(canEdit()){ var l=find(el.getAttribute("data-id")); if(l) openLesson(l,null); } }
     else if(act==="view"){ state.ui.view=el.getAttribute("data-v"); commit(); render(); }
     else if(act==="mprev"){ cursor.setMonth(cursor.getMonth()-1); render(); }
     else if(act==="mnext"){ cursor.setMonth(cursor.getMonth()+1); render(); }
@@ -671,20 +774,22 @@ button{font-family:inherit}
       if(!state.ui.filter.length) state.ui.filter=TIDS.slice();
       commit(); render();
     }
-    else if(act==="settings"){ openSettings(); }
+    else if(act==="settings"){ if(isAdmin()) openSettings(); }
     else if(act==="print"){ window.print(); }
+    else if(act==="signout"){ window.LessonBookFB.signOut(); }
     else if(act==="dismiss-help"){ state.ui.helpDismissed=true; commit(); render(); }
     else if(act==="clear-samples"){
+      if(!canEdit()) return;
       state.lessons=state.lessons.filter(function(l){ return !l.sample; });
       state.bills=state.bills.filter(function(b){ return !b.sample; });
       commit(); render();
     }
     else if(act==="day"){ openDay(el.getAttribute("data-date")); }
-    else if(act==="new-bill"){ openBill(null); }
-    else if(act==="edit-bill"){ var b=findBill(el.getAttribute("data-id")); if(b) openBill(b); }
-    else if(act==="mark-paid"){ var mb=findBill(el.getAttribute("data-id")); if(mb){ mb.paidAmount=billCalc(mb).tot; commit(); render(); } }
+    else if(act==="new-bill"){ if(canEdit()) openBill(null); }
+    else if(act==="edit-bill"){ if(canEdit()){ var b=findBill(el.getAttribute("data-id")); if(b) openBill(b); } }
+    else if(act==="mark-paid"){ if(canEdit()){ var mb=findBill(el.getAttribute("data-id")); if(mb){ mb.paidAmount=billCalc(mb).tot; commit(); render(); } } }
     else if(act==="bfilter"){ state.ui.billFilter=el.getAttribute("data-f"); commit(); render(); }
-    else if(act==="rates"){ openRates(); }
+    else if(act==="rates"){ if(isAdmin()) openRates(); }
   }
 
   function find(id){ for(var i=0;i<state.lessons.length;i++) if(state.lessons[i].id===id) return state.lessons[i]; return null; }
@@ -833,6 +938,10 @@ button{font-family:inherit}
     h+="<div class=\"fld\"><label for=\"g-de\">Day ends</label><select id=\"g-de\">"+hourOpts(s.dayEnd,8,23)+"</select></div>";
     h+="</div>";
     h+="<p class=\"hint\">Everything you enter is saved automatically. Use Print to hand your brother a paper copy.</p>";
+    h+="<div class=\"fld\"><label>Manage access</label><div id=\"members-list\" class=\"hint\">Loading&hellip;</div>";
+    h+="<div class=\"row2\"><input id=\"mem-email\" type=\"email\" placeholder=\"email@gmail.com\" autocomplete=\"off\"><select id=\"mem-role\"><option value=\"scheduler\">Scheduler</option><option value=\"viewer\">Viewer</option><option value=\"admin\">Admin</option></select></div>";
+    h+="<button class=\"mini\" id=\"mem-add\" type=\"button\" style=\"margin-top:6px\">+ Add / update access</button>";
+    h+="</div>";
     h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"g-cancel\">Cancel</button><button class=\"btn primary\" id=\"g-save\">Save</button></div>";
     var m=modal(h);
     m.querySelector("#g-cancel").addEventListener("click",close);
@@ -846,6 +955,29 @@ button{font-family:inherit}
       m.querySelectorAll("[data-tid]").forEach(function(inp){ teacher(inp.getAttribute("data-tid")).name = inp.value.trim(); });
       commit(); close(); render();
     });
+    (function(){
+      var mlist = m.querySelector("#members-list");
+      function refresh(){
+        window.LessonBookFB.listMembers().then(function(rows){
+          mlist.innerHTML = rows.map(function(r){
+            return "<div style=\"display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12.5px\"><span style=\"flex:1;overflow:hidden;text-overflow:ellipsis\">"+esc(r.email)+"</span><span class=\"badge\">"+esc(r.role)+"</span>"
+              + (r.bootstrap?"":"<button class=\"mini\" data-rm=\""+esc(r.email)+"\" type=\"button\">Remove</button>")+"</div>";
+          }).join("") || "<span class=\"hint\">No one else yet.</span>";
+          mlist.querySelectorAll("[data-rm]").forEach(function(btn){
+            btn.addEventListener("click",function(){
+              window.LessonBookFB.removeMember(btn.getAttribute("data-rm")).then(refresh);
+            });
+          });
+        }).catch(function(){ mlist.textContent="Couldn't load."; });
+      }
+      refresh();
+      m.querySelector("#mem-add").addEventListener("click",function(){
+        var em=m.querySelector("#mem-email").value.trim();
+        var rl=m.querySelector("#mem-role").value;
+        if(!em) return;
+        window.LessonBookFB.setMember(em, rl).then(function(){ m.querySelector("#mem-email").value=""; refresh(); });
+      });
+    })();
   }
   function hourOpts(sel,a,b){ var o=""; for(var hh=a;hh<=b;hh++){ o+="<option value=\""+hh+"\""+(hh===sel?" selected":"")+">"+fmtHour(hh)+"</option>"; } return o; }
 
@@ -1052,7 +1184,6 @@ button{font-family:inherit}
     });
   }
 
-  render();
 })();
 </script>
 </body>
