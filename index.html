@@ -762,7 +762,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     var el=e.currentTarget, act=el.getAttribute("data-act");
     if(act!=="day") e.stopPropagation();
     if(act==="add"){ if(canEdit()) openLesson(null,null); }
-    else if(act==="edit"){ if(canEdit()){ var l=find(el.getAttribute("data-id")); if(l) openLesson(l,null); } }
+    else if(act==="edit"){ var l=find(el.getAttribute("data-id")); if(l) openLesson(l,null); }
     else if(act==="view"){ state.ui.view=el.getAttribute("data-v"); commit(); render(); }
     else if(act==="mprev"){ cursor.setMonth(cursor.getMonth()-1); render(); }
     else if(act==="mnext"){ cursor.setMonth(cursor.getMonth()+1); render(); }
@@ -786,7 +786,7 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
     }
     else if(act==="day"){ openDay(el.getAttribute("data-date")); }
     else if(act==="new-bill"){ if(canEdit()) openBill(null); }
-    else if(act==="edit-bill"){ if(canEdit()){ var b=findBill(el.getAttribute("data-id")); if(b) openBill(b); } }
+    else if(act==="edit-bill"){ var b=findBill(el.getAttribute("data-id")); if(b) openBill(b); }
     else if(act==="mark-paid"){ if(canEdit()){ var mb=findBill(el.getAttribute("data-id")); if(mb){ mb.paidAmount=billCalc(mb).tot; commit(); render(); } } }
     else if(act==="bfilter"){ state.ui.billFilter=el.getAttribute("data-f"); commit(); render(); }
     else if(act==="rates"){ if(isAdmin()) openRates(); }
@@ -814,7 +814,17 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
   function onKey(e){ if(e.key==="Escape") close(); }
 
   // ---- lesson modal ----
+  function openLessonReadOnly(l){
+    var h="<h2>"+esc(l.student||"(no name)")+"</h2>";
+    h+="<div class=\"fld\"><label>Instrument / teacher</label><div>"+esc(tlabel(l.teacher))+"</div></div>";
+    h+="<div class=\"fld\"><label>When</label><div>"+(l.recurrence==="weekly" ? "Every "+DOWL[l.dow] : new Date(l.date+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}))+" &middot; "+fmt12(l.start)+" ("+(l.mins||60)+" min)</div></div>";
+    if(l.notes) h+="<div class=\"fld\"><label>Notes</label><div>"+esc(l.notes)+"</div></div>";
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"ro-close\">Close</button></div>";
+    var m=modal(h);
+    m.querySelector("#ro-close").addEventListener("click",close);
+  }
   function openLesson(existing, prefill){
+    if(existing && !canEdit()){ openLessonReadOnly(existing); return; }
     var l = existing ? JSON.parse(JSON.stringify(existing)) : {
       id:null, teacher:(prefill&&prefill.teacher)||state.ui.filter[0]||"piano",
       student:"", recurrence:(prefill&&prefill.recurrence)||"weekly",
@@ -909,10 +919,10 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
       });
       h+="</div>";
     }
-    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"d-close\">Close</button><button class=\"btn primary\" id=\"d-add\">+ Add on this day</button></div>";
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"d-close\">Close</button>"+(canEdit()?"<button class=\"btn primary\" id=\"d-add\">+ Add on this day</button>":"")+"</div>";
     var m=modal(h);
     m.querySelector("#d-close").addEventListener("click",close);
-    m.querySelector("#d-add").addEventListener("click",function(){ close(); openLesson(null,{recurrence:"once",date:dstr}); });
+    if(canEdit()) m.querySelector("#d-add").addEventListener("click",function(){ close(); openLesson(null,{recurrence:"once",date:dstr}); });
     m.querySelectorAll(".daylist button").forEach(function(b){
       b.addEventListener("click",function(){ var l=find(b.getAttribute("data-id")); close(); if(l) openLesson(l,null); });
     });
@@ -982,7 +992,26 @@ window.dispatchEvent(new Event("lessonbook-fb-ready"));
   function hourOpts(sel,a,b){ var o=""; for(var hh=a;hh<=b;hh++){ o+="<option value=\""+hh+"\""+(hh===sel?" selected":"")+">"+fmtHour(hh)+"</option>"; } return o; }
 
   // ---- bill modal ----
+  function openBillReadOnly(b){
+    var c=billCalc(b), t=teacher(b.instrument), pk=b.packageId?pkgById(b.packageId):null;
+    var h="<h2>"+esc(b.student||"—")+"</h2>";
+    h+="<div class=\"fld\"><label>Instrument</label><div>"+esc(t.label)+" &middot; "+(b.clientType==="foreign"?"Abroad":"Local")+(pk?" &middot; "+(+pk.sessions)+"-pack":"")+"</div></div>";
+    h+="<div class=\"fld\"><label>Date</label><div>"+esc(b.date||"")+"</div></div>";
+    h+="<div class=\"calc\">";
+    h+="<div class=\"r\"><span>"+(+b.sessions||0)+" &times; "+money(b.unitRate)+"</span><span>"+money((+b.sessions||0)*(+b.unitRate||0))+"</span></div>";
+    if(c.disc>0) h+="<div class=\"r\"><span>Discount</span><span>&minus;"+money(c.disc)+"</span></div>";
+    h+="<div class=\"r tot\"><span>Total</span><span>"+money(c.tot)+"</span></div>";
+    h+="<div class=\"r bal\"><span>Paid</span><span>"+money(c.paid)+"</span></div>";
+    h+="<div class=\"r bal\"><span>Balance</span><span>"+money(c.bal)+"</span></div>";
+    h+="</div>";
+    h+="<div class=\"fld\"><label>Status</label><div><span class=\"pill-s "+c.status+"\">"+c.status+"</span></div></div>";
+    if(b.notes) h+="<div class=\"fld\"><label>Notes</label><div>"+esc(b.notes)+"</div></div>";
+    h+="<div class=\"m-act\"><span class=\"grow\"></span><button class=\"btn\" id=\"ro-close\">Close</button></div>";
+    var m=modal(h);
+    m.querySelector("#ro-close").addEventListener("click",close);
+  }
   function openBill(existing){
+    if(existing && !canEdit()){ openBillReadOnly(existing); return; }
     var b = existing ? JSON.parse(JSON.stringify(existing)) : {
       id:null, date:iso(new Date()), student:"", instrument:"piano",
       clientType:"local", packageId:null, sessions:1, unitRate:rateFor("piano","local"),
